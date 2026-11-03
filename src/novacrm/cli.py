@@ -155,9 +155,12 @@ def cmd_setup_retell(args):
 
 def cmd_call_test(args):
     cfg = load_config()
+    if args.ring:
+        cfg.voice["ring_timeout_seconds"] = args.ring
     voice = build_voice(cfg)
-    console.print(f"Calling {(args.to or _env('AE_PHONE'))[:-4]}**** via {type(voice).__name__} ...")
-    out = voice.place_call(to_number=args.to or _env("AE_PHONE"), ae_name=cfg.aes[0].name,
+    to = args.to or os.environ.get("AE_PHONE", "+0000")
+    console.print(f"Calling the AE via {type(voice).__name__} ...")
+    out = voice.place_call(to_number=to, ae_name=cfg.aes[0].name,
                            customer_name="Acme Logistics", run_id="call-test", attempt=1)
     console.print(out.model_dump())
 
@@ -231,6 +234,7 @@ def main(argv=None):
     sp.set_defaults(fn=cmd_setup_retell)
     sp = sub.add_parser("call-test", help="place one tier-confirmation call")
     sp.add_argument("--to", default=None)
+    sp.add_argument("--ring", type=int, default=0, help="ring timeout override in seconds")
     sp.set_defaults(fn=cmd_call_test)
     sub.add_parser("check", help="verify all credentials").set_defaults(fn=cmd_check)
     args = p.parse_args(argv)

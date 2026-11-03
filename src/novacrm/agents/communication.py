@@ -50,7 +50,8 @@ class CommunicationAgent:
         self.audit.log(h.run_id, AGENT, "channel_ready", input={"name": name},
                        output={"channel_id": channel_id, "reused": bool(existing)},
                        decision="REUSED" if existing else "CREATED",
-                       rationale="Idempotent: an existing channel with this name is reused")
+                       rationale="Channel already existed; reused (idempotent)" if existing
+                       else f"New {h.tier.value} channel for {h.deal.customer_name}")
 
         topic = (f"{h.tier.value} onboarding · {days}-day plan · {h.project.csm_model} CSM: {h.project.csm_name} · "
                  f"Go-live target {h.project.due_date:%d %b %Y}")
