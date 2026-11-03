@@ -14,11 +14,19 @@ _console = Console()
 _COLORS = {"intake": "cyan", "communication": "magenta", "orchestrator": "yellow", "guardrail": "red"}
 
 
+_MASK_KEYS = {"ae_phone", "phone", "to_number"}
+
+
+def _mask(value: Any) -> Any:
+    s = str(value or "")
+    return s[:-4] + "****" if len(s) > 4 else "****"
+
+
 def _jsonable(obj: Any) -> Any:
     if isinstance(obj, BaseModel):
-        return obj.model_dump(mode="json")
+        return _jsonable(obj.model_dump(mode="json"))
     if isinstance(obj, dict):
-        return {k: _jsonable(v) for k, v in obj.items()}
+        return {k: _mask(v) if k in _MASK_KEYS else _jsonable(v) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)):
         return [_jsonable(v) for v in obj]
     if isinstance(obj, (str, int, float, bool)) or obj is None:
