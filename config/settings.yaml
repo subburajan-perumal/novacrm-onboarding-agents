@@ -44,12 +44,12 @@ rocketlane:
 
 tiers:
   Enterprise:
-    template_id: 0                # Rocketlane template "NovaCRM Onboarding - Enterprise (30 days)"
+    template_id: 5000000110182    # Rocketlane template "NovaCRM Onboarding - Enterprise (30 days)"
     duration_days: 30
     csm_model: Dedicated
     channel_suffix: ent
   Growth:
-    template_id: 0                # Rocketlane template "NovaCRM Onboarding - Growth (14 days)"
+    template_id: 5000000110186    # Rocketlane template "NovaCRM Onboarding - Growth (14 days)"
     duration_days: 14
     csm_model: Pooled
     channel_suffix: grw

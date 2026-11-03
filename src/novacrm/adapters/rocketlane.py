@@ -90,7 +90,7 @@ class RocketlaneClient:
         return self._users.get(email.lower())
 
     def list_tasks(self, project_id: int) -> list[dict]:
-        return self._paged("/tasks", {"projectId.eq": project_id})
+        return self._paged("/tasks", {"projectId.eq": project_id, "includeAllFields": "true"})
 
     def get_project(self, project_id: int) -> dict:
         return self._request("GET", f"/projects/{project_id}")
