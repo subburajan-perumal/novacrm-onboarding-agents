@@ -27,7 +27,7 @@ Design and assumptions: [`docs/requirements.md`](docs/requirements.md).
 | `src/novacrm/audit.py` | JSONL audit log (timestamp, input, output, decision, rationale) |
 | `src/novacrm/adapters/` | Gmail, Claude, Retell+Twilio voice, Rocketlane, Slack |
 | `config/` | Tier → template/duration/CSM model, AE directory, CSM roster |
-| `tests/` | 38 offline tests with fakes for every external system |
+| `tests/` | 42 offline tests with fakes for every external system |
 
 ## Setup
 

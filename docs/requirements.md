@@ -64,7 +64,7 @@ flowchart LR
 
 | Component | Responsibility | Technology |
 |---|---|---|
-| **Intake & Routing Agent** | Watch the CS inbox; extract and validate deal details; call the AE to confirm the tier; check for duplicates; create the Rocketlane project from the right template; verify it. | Python, Gmail API, Claude (structured outputs), Retell AI + Twilio, Rocketlane REST API |
+| **Intake & Routing Agent** | Watch the CS inbox; extract and validate deal details; call the AE to confirm the tier; check for duplicates; create the Rocketlane project from the right template; verify it. | Python, Gmail API, Claude (structured outputs), Retell AI voice agent, Rocketlane REST API |
 | **Communication Agent** | Create the onboarding Slack channel; set a tier-specific name, topic and purpose; post a personalized welcome; invite the CSM and AE; invite the customer (Slack Connect). | Slack Web API, Claude with a deterministic post-check |
 | **Orchestrator** | Owns the run state machine, the hand-off between agents, idempotency and resumption. | Python, SQLite |
 | **Rocketlane automation** | Overdue-task escalation inside Rocketlane (not an agent). | Rocketlane Automations |
@@ -80,7 +80,7 @@ flowchart LR
 
 `RECEIVED → (IGNORED | NEEDS_INFO → SUPERSEDED) → VALIDATED → CALLING(n) → TIER_CONFIRMED | ESCALATED → PROJECT_CREATED | DUPLICATE_ESCALATED | PARKED_RL_DOWN → (CHANNEL_FAILED) → DONE`
 
-Each run is keyed by the Gmail message ID (idempotent), and the Salesforce opportunity ID is written to the project's `externalReferenceId`, so a crash between "project created" and "state saved" is recovered by adopting the project, not duplicating it.
+Each run is keyed by the Gmail message ID (idempotent), and the Salesforce opportunity link is stored in the project's "Salesforce Opportunity" field, so a crash between "project created" and "state saved" is recovered by adopting the project, not duplicating it. Project creation is never blindly re-posted: a timed-out POST is checked for a project it may have created before any retry (a real bug found and fixed during live testing).
 
 ## 4. Detailed behavior
 
@@ -95,7 +95,8 @@ Each run is keyed by the Gmail message ID (idempotent), and the Salesforce oppor
 ### 4.2 Intake: confirm the tier by voice
 
 - The email does not carry the tier, and a tier written in the email is ignored for decision purposes: only the AE's spoken confirmation counts.
-- A Retell AI voice agent calls the AE (number from the AE directory). Script: ask "Enterprise or Growth?", read the answer back, require an explicit yes. Never suggest a tier.
+- A Retell AI voice agent calls the AE. Script: ask "Enterprise or Growth?", read the answer back, require an explicit yes. Never suggest a tier.
+- **Transport.** Production: the same agent rings the AE's mobile (number from the AE directory) over a Twilio number, bridged to Retell by SIP, because Retell-owned numbers only dial US numbers. Demo: calling Indian mobiles needs a paid or ID-verified telephony account, so the video uses Retell's web-call transport: the AE answers an "Incoming call" page and has the same live voice conversation. Decline, or no answer within 45 s, counts as "no answer". Switching is one config value (`voice.mode: twilio`).
 - Retell's post-call analysis returns `plan_tier` (Enterprise / Growth / Unclear) and `readback_confirmed`. Claude then reads the transcript independently.
 - **Accept only if** the call connected, the voice agent captured exactly one tier, the AE confirmed the read-back, and the independent transcript check agrees.
 - **No answer / busy / voicemail:** retry up to 3 calls in total (demo: 20 s apart; production: 15 min).
@@ -108,7 +109,7 @@ Each run is keyed by the Gmail message ID (idempotent), and the Salesforce oppor
 |---|---|---|
 | Template | "NovaCRM Onboarding – Enterprise (30 days)" | "NovaCRM Onboarding – Growth (14 days)" |
 | Due date | start + 29 days | start + 13 days |
-| CSM (team member / Project Manager) | Dedicated CSM, round-robin from the roster | Pooled CSM queue |
+| CSM (team member + "Project Manager" user field) | Dedicated CSM, round-robin from the roster | Pooled CSM queue |
 | Project Owner | CS Manager | CS Manager |
 
 - Template IDs come from configuration, keyed by the confirmed tier. The LLM never chooses them.
@@ -152,7 +153,7 @@ Priya's original rule, "blocked > 3 days", is about blocked status rather than d
 | G3 | No project until a clear, read-back-confirmed tier, agreed by an independent transcript check; retry, then escalate; never default | `guardrails.decide_tier` |
 | G4 | Tier written in the email is ignored for decisions | Intake Agent |
 | G5 | Template, duration and CSM come from configuration keyed by tier, never from the LLM | `IntakeAgent.build_payload` |
-| G6 | Duplicate check before creation; idempotency per email and per opportunity | Orchestrator, Rocketlane `externalReferenceId` |
+| G6 | Duplicate check before creation; idempotency per email and per opportunity; no blind re-POST after a timeout | Orchestrator, Rocketlane client |
 | G7 | Post-creation verification of the template's tasks | Intake Agent |
 | G8 | Welcome message checked for tier consistency, with a safe fallback | `guardrails.check_welcome` |
 | G9 | Email and transcript content treated as data, not instructions (prompt-injection resistance) | LLM system prompts |
@@ -192,8 +193,8 @@ The deadline left no time for a round-trip with Karthik, so these are the assump
 | Demo choice | Production |
 |---|---|
 | Polling Gmail every 15 s | Gmail `users.watch` → Pub/Sub push; a worker queue |
-| Polling Retell / Twilio for call results | Retell and Twilio webhooks into the orchestrator |
-| Twilio trial number (trial notice before the call) | Paid number, business-hours calling window, local caller ID |
+| Polling Retell for call results | Retell and Twilio webhooks into the orchestrator |
+| Retell web call answered on a local page | Twilio (or local carrier) number ringing the AE's mobile; business-hours calling window, local caller ID |
 | SQLite run store, local JSONL audit | Postgres + a managed log/trace store (OpenTelemetry), retention policy |
 | `.env` secrets | Secrets manager, per-environment keys, rotation |
 | Slack Connect invite mocked | Paid Slack plan, `conversations.inviteShared` + admin approval flow |
@@ -210,5 +211,5 @@ The deadline left no time for a round-trip with Karthik, so these are the assump
 | Agent 2 – Communication | `src/novacrm/agents/communication.py` |
 | Rocketlane overdue automation | configured in Rocketlane; shown in the video |
 | Part 3 – guardrails | `src/novacrm/guardrails.py`, `escalation.py`, `audit.py` |
-| Part 4 – automated tests | `tests/` (38 tests, offline; `uv run pytest`) |
+| Part 4 – automated tests | `tests/` (42 tests, offline; `uv run pytest`) |
 | Video – positive and negative runs | Loom link in the submission email |
