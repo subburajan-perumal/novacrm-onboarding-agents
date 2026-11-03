@@ -148,7 +148,7 @@ def cmd_check(args):
     import httpx
     results = []
 
-    needs = {"Rocketlane": ["ROCKETLANE_API_KEY"], "Slack": ["SLACK_BOT_TOKEN"], "Retell": ["RETELL_API_KEY"],
+    needs = {"Rocketlane": ["ROCKETLANE_API_KEY"], "Slack": ["SLACK_BOT_TOKEN"], "Retell": ["RETELL_API_KEY", "RETELL_AGENT_ID"],
              "Twilio": ["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN"], "Claude": ["ANTHROPIC_API_KEY"]}
 
     def check(name, fn):
@@ -165,8 +165,9 @@ def cmd_check(args):
                                            headers={"api-key": _env("ROCKETLANE_API_KEY")}, timeout=20).raise_for_status().status_code)
     check("Slack", lambda: httpx.post("https://slack.com/api/auth.test",
                                       headers={"Authorization": f"Bearer {_env('SLACK_BOT_TOKEN')}"}).json())
-    check("Retell", lambda: httpx.get("https://api.retellai.com/list-agents",
-                                      headers={"Authorization": f"Bearer {_env('RETELL_API_KEY')}"}, timeout=20).raise_for_status().status_code)
+    check("Retell", lambda: httpx.get(f"https://api.retellai.com/get-agent/{_env('RETELL_AGENT_ID')}",
+                                      headers={"Authorization": f"Bearer {_env('RETELL_API_KEY')}"},
+                                      timeout=20).raise_for_status().json().get("agent_name"))
 
     def twilio():
         from twilio.rest import Client
