@@ -20,6 +20,10 @@ gmail:
     escalated: novacrm-escalated
 
 voice:
+  # web: Retell web call answered on a local "incoming call" page (demo; no phone number needed)
+  # twilio: Retell agent carried over a Twilio number to the AE's real phone (production path)
+  # retell_number: Retell-purchased number (US destinations)
+  mode: web
   ring_timeout_seconds: 25        # how long the AE's phone rings before "no answer"
   max_attempts: 3                 # total calls per deal
   max_unclear_attempts: 2         # calls that connected but gave no clear tier

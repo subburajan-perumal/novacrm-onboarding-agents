@@ -32,7 +32,13 @@ def build_voice(cfg):
     """Twilio-carried Retell call if Twilio is configured (reaches any country), else a Retell-number call."""
     from .adapters.voice import RetellNativeVoice, RetellTwilioVoice
     v = cfg.voice
-    if os.environ.get("TWILIO_ACCOUNT_SID", "").strip():
+    mode = os.environ.get("VOICE_MODE", v.get("mode", "web")).strip()
+    if mode == "web":
+        from .adapters.webcall import RetellWebCallVoice
+        return RetellWebCallVoice(retell_api_key=_env("RETELL_API_KEY"), agent_id=_env("RETELL_AGENT_ID"),
+                                  ring_timeout=v["ring_timeout_seconds"], poll_seconds=v["call_poll_seconds"],
+                                  max_wait_seconds=v["call_max_wait_seconds"])
+    if mode == "twilio" and os.environ.get("TWILIO_ACCOUNT_SID", "").strip():
         return RetellTwilioVoice(
             retell_api_key=_env("RETELL_API_KEY"), agent_id=_env("RETELL_AGENT_ID"),
             twilio_sid=_env("TWILIO_ACCOUNT_SID"), twilio_token=_env("TWILIO_AUTH_TOKEN"),
