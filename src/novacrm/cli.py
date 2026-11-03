@@ -39,9 +39,19 @@ def build_voice(cfg):
             from_number=_env("TWILIO_FROM_NUMBER"), ring_timeout=v["ring_timeout_seconds"],
             poll_seconds=v["call_poll_seconds"], max_wait_seconds=v["call_max_wait_seconds"],
         )
-    return RetellNativeVoice(retell_api_key=_env("RETELL_API_KEY"), agent_id=_env("RETELL_AGENT_ID"),
-                             from_number=_env("RETELL_FROM_NUMBER"), poll_seconds=v["call_poll_seconds"],
-                             max_wait_seconds=v["call_max_wait_seconds"])
+    if os.environ.get("RETELL_FROM_NUMBER", "").strip():
+        return RetellNativeVoice(retell_api_key=_env("RETELL_API_KEY"), agent_id=_env("RETELL_AGENT_ID"),
+                                 from_number=_env("RETELL_FROM_NUMBER"), poll_seconds=v["call_poll_seconds"],
+                                 max_wait_seconds=v["call_max_wait_seconds"])
+    console.print("[yellow]No telephony configured (Twilio or RETELL_FROM_NUMBER): calls will fail and escalate.[/yellow]")
+    return UnconfiguredVoice()
+
+
+class UnconfiguredVoice:
+    """Every call fails, so the tier guardrail escalates instead of guessing (used until telephony is set up)."""
+
+    def place_call(self, **kw):
+        raise RuntimeError("telephony not configured")
 
 
 def build(mail_mode: str = "gmail", echo: bool = True):

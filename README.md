@@ -36,6 +36,7 @@ uv sync
 cp .env.example .env          # fill in keys (see below)
 uv run novacrm setup-retell   # creates the Retell voice agent; put RETELL_AGENT_ID in .env
 uv run novacrm check          # verifies Rocketlane, Slack, Retell, Twilio, Claude
+uv run python scripts/gmail_auth.py   # one-time Gmail consent -> secrets/token.json
 ```
 
 | Service | What you need |
