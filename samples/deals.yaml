@@ -59,3 +59,34 @@ not_a_deal:
   body: |
     Hey team, anyone up for lunch on Friday at the new place near the office?
     - Subbu
+
+enterprise_demo:
+  subject: "Closed Won: Northwind Freight - kick off onboarding"
+  body: |
+    Hi CS team,
+
+    Northwind Freight signed this morning. Please start onboarding.
+
+    Customer: Northwind Freight
+    Primary contact: Ananya Rao (ananya.rao@northwindfreight.com)
+    Salesforce opportunity: https://novacrm.lightning.force.com/lightning/r/Opportunity/0065g00000NwF77AAB/view
+    Close date: 3 Nov 2026
+    Notes: 120 seats across 3 regions, migrating from Salesforce Sales Cloud.
+
+    Thanks,
+    Subburajan Perumal
+    Account Executive, NovaCRM
+
+ambiguous_demo:
+  subject: "Closed Won: Orbitly Health"
+  body: |
+    Hi team,
+
+    Orbitly Health closed today.
+
+    Customer: Orbitly Health
+    Contact: Dev Malhotra (dev@orbitlyhealth.com)
+    Opportunity: https://novacrm.my.salesforce.com/0065g00000OrB55AAB
+    Close date: 3 Nov 2026
+
+    - Subburajan Perumal
