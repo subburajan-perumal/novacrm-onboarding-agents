@@ -23,16 +23,15 @@ def test_enterprise_deal_end_to_end(system):
     assert p["sources"] == [{"templateId": 501, "startDate": "2026-11-03"}]
     assert p["projectName"] == "Acme Logistics - Onboarding (Enterprise)"
     assert p["customer"] == {"companyName": "Acme Logistics"}
-    assert p["externalReferenceId"] == "0065g00000XyZ12AAB"
-    assert p["teamMembers"]["members"] == [{"emailId": "subburajanperumal+csm.kavya@gmail.com"}]
+    assert p["teamMembers"]["members"] == [{"emailId": "sampleuser1@rocketlane.com"}]
     assert p["dueDate"] == "2026-12-02"
 
     # personalized Slack channel
     ch = s.chat.channels["onb-acme-logistics-ent"]
-    assert ch["topic"].startswith("Enterprise onboarding · 30-day plan · Dedicated CSM: Kavya Raman")
+    assert ch["topic"].startswith("Enterprise onboarding · 30-day plan · Dedicated CSM: Rachel")
     assert "Acme Logistics" in ch["purpose"] and "rocketlane.com/projects/" in ch["purpose"]
     welcome = ch["messages"][0]
-    assert "Acme Logistics" in welcome and "30 days" in welcome and "Kavya Raman" in welcome
+    assert "Acme Logistics" in welcome and "30 days" in welcome and "Rachel" in welcome
     assert any("U_KAVYA" in ids and "U_AE" in ids for _, ids in s.chat.invites)
 
     # inbox bookkeeping + nobody escalated

@@ -33,14 +33,27 @@ def test_rocketlane_client_retries_with_backoff_then_gives_up():
     transport = httpx.MockTransport(lambda req: (hits.append(req), httpx.Response(503))[1])
     client = RocketlaneClient("k", max_retries=3, backoff_seconds=2, sleep=sleeps.append, transport=transport)
     with pytest.raises(RocketlaneUnavailable):
-        client.create_project({"projectName": "x"})
+        client.list_tasks(1)
     assert len(hits) == 3 and sleeps == [2, 4]
 
 
 def test_rocketlane_client_recovers_after_transient_errors():
-    responses = iter([httpx.Response(502), httpx.Response(500), httpx.Response(201, json={"projectId": 7})])
+    responses = iter([httpx.Response(502), httpx.Response(500),
+                      httpx.Response(200, json={"data": [{"taskId": 7}], "pagination": {"hasMore": False}})])
     client = RocketlaneClient("k", sleep=lambda s: None, transport=httpx.MockTransport(lambda r: next(responses)))
-    assert client.create_project({"projectName": "x"})["projectId"] == 7
+    assert client.list_tasks(1) == [{"taskId": 7}]
+
+
+def test_create_project_retries_5xx_when_nothing_was_created():
+    def handler(request):
+        if request.method == "GET":
+            return httpx.Response(200, json={"data": [], "pagination": {"hasMore": False}})
+        handler.posts += 1
+        return httpx.Response(503) if handler.posts < 3 else httpx.Response(201, json={"projectId": 7})
+    handler.posts = 0
+    client = RocketlaneClient("k", sleep=lambda s: None, transport=httpx.MockTransport(handler))
+    assert client.create_project({"projectName": "x", "customer": {"companyName": "c"}})["projectId"] == 7
+    assert handler.posts == 3
 
 
 def test_rocketlane_timeout_counts_as_unavailable():
@@ -54,7 +67,8 @@ def test_rocketlane_timeout_counts_as_unavailable():
 # ---- existing onboarding project ---------------------------------------------
 def test_existing_project_is_not_duplicated(system):
     existing = [{"projectId": 42, "projectName": "Acme Logistics - Onboarding (Enterprise)",
-                 "customer": {"companyName": "Acme Logistics"}, "externalReferenceId": "0065g00000OLD00AAB"}]
+                 "customer": {"companyName": "Acme Logistics"},
+                 "fields": [{"fieldId": 1, "fieldValue": "https://x.lightning.force.com/0065g00000OLD00AAB"}]}]
     s = system(outcomes=[answered("Enterprise")], rocketlane=FakeRocketlane(existing=existing))
     run = s.run(make_email("enterprise_ok"))
     assert run["state"] == RunState.DUPLICATE_ESCALATED.value
@@ -181,3 +195,19 @@ def test_template_not_configured_escalates(system, cfg):
 ])
 def test_decide_tier(cfg, outcome, judge, attempt, unclear, action):
     assert decide_tier(outcome, judge, attempt, unclear, cfg).action == action
+
+
+def test_timed_out_create_is_not_reposted_when_project_exists():
+    """Regression: a slow template import made POST /projects time out; blind retries created duplicates."""
+    posts = []
+
+    def handler(request):
+        if request.method == "POST":
+            posts.append(request)
+            raise httpx.ReadTimeout("timed out")
+        return httpx.Response(200, json={"data": [{"projectId": 99, "projectName": "Acme - Onboarding (Enterprise)",
+                                                    "customer": {"companyName": "Acme"}}],
+                                         "pagination": {"hasMore": False}})
+    client = RocketlaneClient("k", sleep=lambda s: None, transport=httpx.MockTransport(handler))
+    created = client.create_project({"projectName": "Acme - Onboarding (Enterprise)", "customer": {"companyName": "Acme"}})
+    assert created["projectId"] == 99 and len(posts) == 1

@@ -148,7 +148,14 @@ def cmd_check(args):
     import httpx
     results = []
 
+    needs = {"Rocketlane": ["ROCKETLANE_API_KEY"], "Slack": ["SLACK_BOT_TOKEN"], "Retell": ["RETELL_API_KEY"],
+             "Twilio": ["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN"], "Claude": ["ANTHROPIC_API_KEY"]}
+
     def check(name, fn):
+        missing = [k for k in needs.get(name, []) if not os.environ.get(k, "").strip()]
+        if missing:
+            results.append((name, "SKIP", f"missing {', '.join(missing)}"))
+            return
         try:
             results.append((name, "OK", str(fn())[:80]))
         except Exception as exc:

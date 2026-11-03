@@ -1,10 +1,11 @@
 # Enterprise deals get a dedicated CSM (round-robin over this list).
 # Growth deals go to the pooled CSM queue.
+# Emails must be Rocketlane team members (the CSM becomes the project's "Project Manager").
 dedicated:
-  - name: Kavya Raman
-    email: subburajanperumal+csm.kavya@gmail.com
-  - name: Rahul Iyer
-    email: subburajanperumal+csm.rahul@gmail.com
+  - name: Rachel
+    email: sampleuser1@rocketlane.com
+  - name: Paul
+    email: sampleuser2@rocketlane.com
 pooled:
   name: Growth CSM Pool
-  email: subburajanperumal+csm.pool@gmail.com
+  email: subburajanperumal@gmail.com

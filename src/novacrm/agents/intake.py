@@ -135,7 +135,7 @@ class IntakeAgent:
         n = len([r for r in self.store.list() if r.get("tier") == Tier.ENTERPRISE.value and r.get("project_id")])
         return self.cfg.dedicated_csms[n % len(self.cfg.dedicated_csms)]
 
-    def build_payload(self, deal: ParsedDeal, tier: Tier, csm: CSM, start: date) -> dict:
+    def build_payload(self, deal: ParsedDeal, tier: Tier, csm: CSM, start: date, csm_user_id: Optional[int] = None) -> dict:
         tcfg = self.cfg.tier(tier.value)
         rl = self.cfg.rocketlane
         due = start + timedelta(days=tcfg["duration_days"] - 1)
@@ -146,7 +146,6 @@ class IntakeAgent:
             "autoCreateCompany": True,
             "startDate": start.isoformat(),
             "dueDate": due.isoformat(),
-            "externalReferenceId": deal.salesforce_opportunity_id,
             "teamMembers": {"members": [{"emailId": csm.email}]},
             "sources": [{"templateId": int(tcfg["template_id"]), "startDate": start.isoformat()}],
         }
@@ -159,6 +158,9 @@ class IntakeAgent:
         values = {"plan_tier": tier.value, "csm_model": tcfg["csm_model"],
                   "salesforce_opportunity": deal.salesforce_url, "account_executive": deal.ae_name}
         fields = [{"fieldId": int(fids[k]), "fieldValue": v} for k, v in values.items() if int(fids.get(k) or 0)]
+        pm_field = int(rl.get("project_manager_field_id") or 0)
+        if pm_field and csm_user_id:
+            fields.append({"fieldId": pm_field, "fieldValue": csm_user_id})
         if fields:
             payload["fields"] = fields
         return payload
@@ -182,9 +184,9 @@ class IntakeAgent:
             adopt = None
             if existing:
                 same_run = run["data"].get("project_create_attempted") and any(
-                    p.get("externalReferenceId") == deal.salesforce_opportunity_id for p in existing)
+                    p.get("opportunity_match") for p in existing)
                 if same_run:  # our own earlier attempt succeeded before a crash: adopt it, don't duplicate
-                    adopt = next(p for p in existing if p.get("externalReferenceId") == deal.salesforce_opportunity_id)
+                    adopt = next(p for p in existing if p.get("opportunity_match"))
                 else:
                     names = ", ".join(f"#{p.get('projectId')} {p.get('projectName')}" for p in existing)
                     self.store.update(run_id, state=RunState.DUPLICATE_ESCALATED, data={"existing": names})
@@ -199,7 +201,15 @@ class IntakeAgent:
                 self.audit.log(run_id, AGENT, "project_adopted", output={"projectId": adopt.get("projectId")},
                                decision="ADOPT", rationale="Project from this run's earlier attempt already exists")
             else:
-                payload = self.build_payload(deal, tier, csm, start)
+                csm_user_id = self.projects.find_user_id(csm.email)
+                if csm_user_id is None:
+                    self.audit.log(run_id, "guardrail", "csm_not_in_rocketlane", input={"csm": csm.email},
+                                   decision="ESCALATE", rationale="Assigned CSM is not a Rocketlane user")
+                    self.store.update(run_id, state=RunState.ESCALATED)
+                    self.escalator.escalate(run_id, email, f"CSM {csm.name} is not a Rocketlane user",
+                                            customer=deal.customer_name)
+                    return None
+                payload = self.build_payload(deal, tier, csm, start, csm_user_id)
                 self.store.update(run_id, data={"project_create_attempted": True})
                 created = self.projects.create_project(payload)
                 self.audit.log(run_id, AGENT, "project_created", input=payload,

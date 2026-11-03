@@ -1,0 +1,39 @@
+# NovaCRM standard onboarding: 4 phases, 15 tasks. Day numbers are 1-based offsets from the start.
+# Used by scripts/rocketlane_bootstrap.py to build the template-source projects, which are then
+# saved as Rocketlane templates ("Save as template").
+phases:
+  - name: Kickoff
+    enterprise: [1, 5]
+    growth: [1, 2]
+    tasks:
+      - {name: "AE to CS handoff review", enterprise: [1, 1], growth: [1, 1]}
+      - {name: "Schedule kickoff call", enterprise: [1, 2], growth: [1, 1]}
+      - {name: "Kickoff call held and success criteria agreed", enterprise: [3, 4], growth: [2, 2], type: MILESTONE}
+      - {name: "Customer workspace access provisioned", enterprise: [4, 5], growth: [2, 2]}
+  - name: Data Migration
+    enterprise: [6, 15]
+    growth: [3, 7]
+    tasks:
+      - {name: "Data export received from customer", enterprise: [6, 8], growth: [3, 3]}
+      - {name: "Field mapping approved by customer", enterprise: [8, 10], growth: [4, 4]}
+      - {name: "Test migration run", enterprise: [10, 12], growth: [5, 5]}
+      - {name: "Production migration run", enterprise: [12, 14], growth: [6, 6]}
+      - name: "Customer data verification sign-off"
+        enterprise: [14, 15]
+        growth: [7, 7]
+        type: MILESTONE
+        description: "Customer confirms record counts and spot-checks migrated data. Go-Live cannot start until this is approved."
+  - name: Configuration
+    enterprise: [16, 24]
+    growth: [8, 11]
+    tasks:
+      - {name: "Workspace and users configured", enterprise: [16, 18], growth: [8, 8]}
+      - {name: "Pipelines and custom fields set up", enterprise: [18, 21], growth: [9, 9]}
+      - {name: "Integrations connected", enterprise: [20, 23], growth: [10, 10]}
+      - {name: "Admin training session", enterprise: [23, 24], growth: [11, 11]}
+  - name: Go-Live
+    enterprise: [25, 30]
+    growth: [12, 14]
+    tasks:
+      - {name: "Go-live readiness check", enterprise: [25, 27], growth: [12, 12], description: "Blocked until the customer data verification sign-off is approved."}
+      - {name: "Go-live and handoff summary to Support", enterprise: [28, 30], growth: [13, 14], type: MILESTONE}

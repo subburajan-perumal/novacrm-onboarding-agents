@@ -50,8 +50,8 @@ class System:
         self.llm = llm or FakeLLM()
         self.voice = FakeVoice(outcomes or [])
         self.rl = rocketlane or FakeRocketlane()
-        self.chat = chat or FakeChat(users={"subburajanperumal+csm.kavya@gmail.com": "U_KAVYA",
-                                            "subburajanperumal+csm.pool@gmail.com": "U_POOL",
+        self.chat = chat or FakeChat(users={"sampleuser1@rocketlane.com": "U_KAVYA",
+                                            "subburajanperumal@gmail.com": "U_POOL",
                                             AE_EMAIL: "U_AE"})
         self.audit = AuditLog(tmp_path / "audit.jsonl", echo=False)
         self.store = RunStore(":memory:")

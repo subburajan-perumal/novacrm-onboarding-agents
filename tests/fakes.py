@@ -101,18 +101,27 @@ class FakeRocketlane:
 
     def find_existing_projects(self, customer_name, opportunity_id):
         self._maybe_down()
-        return [p for p in self.projects
-                if p.get("externalReferenceId") == opportunity_id
-                or (p.get("customer") or {}).get("companyName", "").lower() == customer_name.lower()]
+        out = []
+        for p in self.projects:
+            if (p.get("customer") or {}).get("companyName", "").lower() == customer_name.lower():
+                values = " ".join(str(f.get("fieldValue", "")) for f in p.get("fields") or [])
+                out.append({**p, "opportunity_match": opportunity_id in values})
+        return out
 
     def create_project(self, payload):
         self._maybe_down()
         project = {"projectId": 1000 + len(self.projects), "projectName": payload["projectName"],
                    "startDate": payload["startDate"], "dueDate": payload["dueDate"],
-                   "customer": payload["customer"], "externalReferenceId": payload.get("externalReferenceId")}
+                   "customer": payload["customer"], "fields": payload.get("fields", [])}
         self.projects.append(project)
         self.created.append(payload)
         return project
+
+    USERS = {"sampleuser1@rocketlane.com": 11, "sampleuser2@rocketlane.com": 12, "subburajanperumal@gmail.com": 10}
+
+    def find_user_id(self, email):
+        self._maybe_down()
+        return self.USERS.get(email.lower())
 
     def list_tasks(self, project_id):
         self._maybe_down()

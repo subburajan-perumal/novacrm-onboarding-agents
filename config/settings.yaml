@@ -35,11 +35,12 @@ rocketlane:
   backoff_seconds: 2              # exponential: 2, 4, 8
   invite_customer: false          # true in production (sends the customer a Rocketlane invite)
   expected_task_count: 15
-  field_ids:                      # optional custom project fields; leave 0 to skip
-    plan_tier: 0
-    csm_model: 0
-    salesforce_opportunity: 0
-    account_executive: 0
+  field_ids:                      # custom project fields (created by scripts/rocketlane_bootstrap.py fields)
+    plan_tier: 5000001024460
+    csm_model: 5000001024461
+    salesforce_opportunity: 5000001024462
+    account_executive: 5000001024463
+  project_manager_field_id: 5000001024464   # SINGLE_USER field; value = CSM's Rocketlane userId
 
 tiers:
   Enterprise:
