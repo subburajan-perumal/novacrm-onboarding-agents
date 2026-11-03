@@ -51,8 +51,7 @@ class System:
         self.voice = FakeVoice(outcomes or [])
         self.rl = rocketlane or FakeRocketlane()
         self.chat = chat or FakeChat(users={"sampleuser1@rocketlane.com": "U_KAVYA",
-                                            "subburajanperumal@gmail.com": "U_POOL",
-                                            AE_EMAIL: "U_AE"})
+                                            "subburajan.dev@gmail.com": "U_AE"})  # AE's Slack alias
         self.audit = AuditLog(tmp_path / "audit.jsonl", echo=False)
         self.store = RunStore(":memory:")
         self.escalator = Escalator(cfg, self.mail, self.audit, self.chat)

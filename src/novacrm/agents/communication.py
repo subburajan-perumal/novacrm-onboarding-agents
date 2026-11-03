@@ -85,12 +85,17 @@ class CommunicationAgent:
         self.chat.post_message(channel_id, welcome)
         self.chat.post_message(channel_id, f":clipboard: Onboarding plan in Rocketlane: {h.project.project_url}")
 
-        invited = []
-        for email in (h.project.csm_email, h.deal.ae_email):
-            uid = self.chat.lookup_user(email)
-            if uid:
+        invited, missing = [], []
+        aliases = self.cfg.settings.get("slack", {}).get("email_aliases") or {}
+        for email in dict.fromkeys((h.project.csm_email, h.deal.ae_email)):
+            uid = self.chat.lookup_user(aliases.get(email, email))
+            if uid and uid not in invited:
                 invited.append(uid)
+            elif not uid:
+                missing.append(email)
         self.chat.invite(channel_id, invited)
+        self.audit.log(h.run_id, AGENT, "internal_invites", output={"invited": invited, "not_in_slack": missing},
+                       decision="INVITED", rationale="CSM and AE join the customer channel")
 
         self.audit.log(h.run_id, AGENT, "customer_invite_mocked",
                        input={"emails": [h.deal.contact_email]},

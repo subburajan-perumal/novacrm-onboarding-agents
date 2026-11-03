@@ -56,4 +56,6 @@ tiers:
 
 slack:
   escalation_channel: cs-escalations
-  workspace_url: https://novacrm-demo.slack.com
+  workspace_url: https://subburajan-test.slack.com
+  email_aliases:                  # work email -> Slack account email, when they differ
+    subburajanperumal@gmail.com: subburajan.dev@gmail.com
