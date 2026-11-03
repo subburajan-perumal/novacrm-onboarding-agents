@@ -28,12 +28,27 @@ def _env(name: str) -> str:
     return val
 
 
+def build_voice(cfg):
+    """Twilio-carried Retell call if Twilio is configured (reaches any country), else a Retell-number call."""
+    from .adapters.voice import RetellNativeVoice, RetellTwilioVoice
+    v = cfg.voice
+    if os.environ.get("TWILIO_ACCOUNT_SID", "").strip():
+        return RetellTwilioVoice(
+            retell_api_key=_env("RETELL_API_KEY"), agent_id=_env("RETELL_AGENT_ID"),
+            twilio_sid=_env("TWILIO_ACCOUNT_SID"), twilio_token=_env("TWILIO_AUTH_TOKEN"),
+            from_number=_env("TWILIO_FROM_NUMBER"), ring_timeout=v["ring_timeout_seconds"],
+            poll_seconds=v["call_poll_seconds"], max_wait_seconds=v["call_max_wait_seconds"],
+        )
+    return RetellNativeVoice(retell_api_key=_env("RETELL_API_KEY"), agent_id=_env("RETELL_AGENT_ID"),
+                             from_number=_env("RETELL_FROM_NUMBER"), poll_seconds=v["call_poll_seconds"],
+                             max_wait_seconds=v["call_max_wait_seconds"])
+
+
 def build(mail_mode: str = "gmail", echo: bool = True):
     cfg = load_config()
     from .adapters.llm import ClaudeLLM
     from .adapters.rocketlane import RocketlaneClient
     from .adapters.slack import SlackClient
-    from .adapters.voice import RetellTwilioVoice
     from .agents.communication import CommunicationAgent
     from .agents.intake import IntakeAgent
 
@@ -48,13 +63,7 @@ def build(mail_mode: str = "gmail", echo: bool = True):
         mail = ConsoleMail()
     llm = ClaudeLLM(cfg.settings["llm"]["model"], cfg.settings["llm"]["effort"],
                     fallbacks=cfg.settings["llm"].get("fallbacks", True))
-    v = cfg.voice
-    voice = RetellTwilioVoice(
-        retell_api_key=_env("RETELL_API_KEY"), agent_id=_env("RETELL_AGENT_ID"),
-        twilio_sid=_env("TWILIO_ACCOUNT_SID"), twilio_token=_env("TWILIO_AUTH_TOKEN"),
-        from_number=_env("TWILIO_FROM_NUMBER"), ring_timeout=v["ring_timeout_seconds"],
-        poll_seconds=v["call_poll_seconds"], max_wait_seconds=v["call_max_wait_seconds"],
-    )
+    voice = build_voice(cfg)
     rl = cfg.rocketlane
     projects = RocketlaneClient(_env("ROCKETLANE_API_KEY"), rl["base_url"], rl["max_retries"], rl["backoff_seconds"])
     chat = SlackClient(_env("SLACK_BOT_TOKEN"))
@@ -130,13 +139,8 @@ def cmd_setup_retell(args):
 
 def cmd_call_test(args):
     cfg = load_config()
-    from .adapters.voice import RetellTwilioVoice
-    v = cfg.voice
-    voice = RetellTwilioVoice(
-        retell_api_key=_env("RETELL_API_KEY"), agent_id=_env("RETELL_AGENT_ID"),
-        twilio_sid=_env("TWILIO_ACCOUNT_SID"), twilio_token=_env("TWILIO_AUTH_TOKEN"),
-        from_number=_env("TWILIO_FROM_NUMBER"), ring_timeout=v["ring_timeout_seconds"],
-    )
+    voice = build_voice(cfg)
+    console.print(f"Calling {(args.to or _env('AE_PHONE'))[:-4]}**** via {type(voice).__name__} ...")
     out = voice.place_call(to_number=args.to or _env("AE_PHONE"), ae_name=cfg.aes[0].name,
                            customer_name="Acme Logistics", run_id="call-test", attempt=1)
     console.print(out.model_dump())

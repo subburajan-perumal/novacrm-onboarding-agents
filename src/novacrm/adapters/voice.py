@@ -126,30 +126,7 @@ class RetellTwilioVoice:
         if status in ("failed", "canceled", "timeout"):
             return CallOutcome(call_id=call_id, status="failed", raw_reason=f"twilio:{status}")
 
-        call = self._wait_retell(call_id)
-        reason = call.get("disconnection_reason") or call.get("call_status", "")
-        analysis = call.get("call_analysis") or {}
-        if call.get("call_status") in ("registered", "not_connected") or reason == "registered_call_timeout":
-            # Twilio answered but never bridged to the agent (e.g. trial key not pressed, AE hung up instantly)
-            return CallOutcome(call_id=call_id, status="no_answer", raw_reason=f"retell:{reason or 'not bridged'}")
-        if reason == "voicemail_reached" or analysis.get("in_voicemail"):
-            return CallOutcome(call_id=call_id, status="voicemail", raw_reason=f"retell:{reason}")
-        if reason in ("dial_no_answer", "user_declined"):
-            return CallOutcome(call_id=call_id, status="no_answer", raw_reason=f"retell:{reason}")
-        if str(reason).startswith("error") or call.get("call_status") == "error":
-            return CallOutcome(call_id=call_id, status="failed", raw_reason=f"retell:{reason}",
-                               transcript=call.get("transcript", ""))
-
-        custom = analysis.get("custom_analysis_data") or {}
-        return CallOutcome(
-            call_id=call_id,
-            status="answered",
-            tier=custom.get("plan_tier"),
-            readback_confirmed=bool(custom.get("readback_confirmed")),
-            transcript=call.get("transcript", ""),
-            summary=analysis.get("call_summary", ""),
-            raw_reason=f"retell:{reason}",
-        )
+        return interpret_call(call_id, self._wait_retell(call_id))
 
     def _wait_twilio(self, sid: str) -> str:
         deadline = time.monotonic() + self.max_wait
@@ -177,3 +154,65 @@ class RetellTwilioVoice:
                 return call  # Twilio already finished; this call was never bridged
             self.sleep(self.poll)
         return call
+
+
+def interpret_call(call_id: str, call: dict) -> CallOutcome:
+    """Map a Retell call record to a CallOutcome (status + post-call analysis)."""
+    reason = call.get("disconnection_reason") or call.get("call_status", "")
+    analysis = call.get("call_analysis") or {}
+    if reason in ("dial_no_answer", "user_declined", "registered_call_timeout") or (
+            call.get("call_status") in ("registered", "not_connected") and not str(reason).startswith(("dial_failed", "error", "invalid"))):
+        # never connected to the AE (or Twilio answered but never bridged, e.g. trial key not pressed)
+        return CallOutcome(call_id=call_id, status="no_answer", raw_reason=f"retell:{reason or 'not connected'}")
+    if reason == "dial_busy":
+        return CallOutcome(call_id=call_id, status="busy", raw_reason="retell:dial_busy")
+    if reason == "voicemail_reached" or analysis.get("in_voicemail"):
+        return CallOutcome(call_id=call_id, status="voicemail", raw_reason=f"retell:{reason}")
+    if str(reason).startswith(("error", "dial_failed", "invalid", "telephony")) or call.get("call_status") == "error":
+        return CallOutcome(call_id=call_id, status="failed", raw_reason=f"retell:{reason}",
+                           transcript=call.get("transcript", ""))
+    custom = analysis.get("custom_analysis_data") or {}
+    return CallOutcome(
+        call_id=call_id,
+        status="answered",
+        tier=custom.get("plan_tier"),
+        readback_confirmed=bool(custom.get("readback_confirmed")),
+        transcript=call.get("transcript", ""),
+        summary=analysis.get("call_summary", ""),
+        raw_reason=f"retell:{reason}",
+    )
+
+
+class RetellNativeVoice:
+    """Outbound call placed by Retell itself from a Retell-managed number (no Twilio)."""
+
+    def __init__(self, *, retell_api_key: str, agent_id: str, from_number: str, poll_seconds: float = 3,
+                 max_wait_seconds: int = 300, sleep: Callable[[float], None] = time.sleep):
+        self.retell = httpx.Client(base_url=RETELL_BASE, headers={"Authorization": f"Bearer {retell_api_key}"}, timeout=30)
+        self.agent_id, self.from_number = agent_id, from_number
+        self.poll, self.max_wait, self.sleep = poll_seconds, max_wait_seconds, sleep
+
+    def place_call(self, *, to_number: str, ae_name: str, customer_name: str, run_id: str, attempt: int) -> CallOutcome:
+        resp = self.retell.post("/v2/create-phone-call", json={
+            "from_number": self.from_number,
+            "to_number": to_number,
+            "override_agent_id": self.agent_id,
+            "metadata": {"run_id": run_id, "attempt": attempt},
+            "retell_llm_dynamic_variables": {"ae_name": ae_name.split()[0], "customer_name": customer_name},
+        })
+        resp.raise_for_status()
+        call_id = resp.json()["call_id"]
+        deadline = time.monotonic() + self.max_wait
+        call: dict = {}
+        while time.monotonic() < deadline:
+            r = self.retell.get(f"/v2/get-call/{call_id}")
+            r.raise_for_status()
+            call = r.json()
+            status = call.get("call_status")
+            if status in ("error", "not_connected"):
+                break
+            if status == "ended" and (call.get("call_analysis") is not None
+                                      or str(call.get("disconnection_reason", "")).startswith("dial_")):
+                break
+            self.sleep(self.poll)
+        return interpret_call(call_id, call)
