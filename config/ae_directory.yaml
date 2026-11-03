@@ -1,0 +1,10 @@
+# Account Executives allowed to trigger onboarding. The deal email has no phone number,
+# so the AE's phone comes from here (in production: Salesforce User record / HRIS).
+# ${VAR} values are read from the environment (.env).
+account_executives:
+  - name: Subburajan Perumal
+    email: subburajanperumal@gmail.com
+    phone: ${AE_PHONE}
+  - name: Arjun Mehta
+    email: arjun.mehta@novacrm.com
+    phone: ${AE_PHONE}

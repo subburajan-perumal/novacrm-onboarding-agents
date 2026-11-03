@@ -1,0 +1,61 @@
+# Sample AE deal notifications. `novacrm send-sample <key>` mails one to the CS inbox.
+enterprise_ok:
+  subject: "Closed Won: Acme Logistics - please start onboarding"
+  body: |
+    Hi CS team,
+
+    We just closed Acme Logistics. Please kick off onboarding.
+
+    Customer: Acme Logistics
+    Primary contact: Meera Nair (meera.nair@acmelogistics.io)
+    Salesforce opportunity: https://novacrm.lightning.force.com/lightning/r/Opportunity/0065g00000XyZ12AAB/view
+    Close date: 3 Nov 2026
+    Notes: 40 seats, migrating from HubSpot. They want go-live before their January sales kickoff.
+
+    Thanks,
+    Subburajan Perumal
+    Account Executive, NovaCRM
+
+growth_ok:
+  subject: "New deal closed - BrightPath Dental"
+  body: |
+    Hello team,
+
+    BrightPath Dental signed today.
+
+    Customer: BrightPath Dental
+    Contact: Dr. Sam Fernandes, sam@brightpathdental.com
+    Opportunity: https://novacrm.my.salesforce.com/0065g00000AbC34AAD
+    Close date: 3 Nov 2026
+
+    Cheers,
+    Subburajan Perumal
+
+missing_fields:
+  subject: "Closed Won: Zenith Foods"
+  body: |
+    Hi team,
+
+    Great news, Zenith Foods is closed! Please start their onboarding asap.
+    Contact is their ops lead, Priyanka.
+
+    Thanks,
+    Subburajan Perumal
+
+malformed:
+  subject: "Closed Won - Orbit Analytics"
+  body: |
+    Hi CS,
+
+    Customer: Orbit Analytics
+    Contact: Daniel Ross (daniel.ross@orbit-analytics)
+    Opportunity: https://docs.google.com/spreadsheets/d/1AbCdEf/edit
+    Plan: Enterprise
+
+    - Subburajan Perumal
+
+not_a_deal:
+  subject: "Lunch on Friday?"
+  body: |
+    Hey team, anyone up for lunch on Friday at the new place near the office?
+    - Subbu

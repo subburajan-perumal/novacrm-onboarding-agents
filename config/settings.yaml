@@ -1,0 +1,58 @@
+# NovaCRM onboarding automation settings. IDs come from the Rocketlane UI (template URL / field settings).
+
+cs_inbox: subburajanperumal+novacrm-cs@gmail.com      # the "CS team inbox" the Intake Agent watches
+cs_manager:                                          # human escalation target (Priya)
+  name: Priya (CS Manager)
+  email: subburajanperumal+priya@gmail.com
+company_domain: novacrm.com                          # internal domain; a customer contact may not use it
+
+llm:
+  model: claude-opus-5-5
+  effort: low
+
+gmail:
+  poll_seconds: 15
+  lookback: 2d
+  seen_label: novacrm-seen
+  labels:
+    processed: novacrm-processed
+    needs_info: novacrm-needs-info
+    escalated: novacrm-escalated
+
+voice:
+  ring_timeout_seconds: 25        # how long the AE's phone rings before "no answer"
+  max_attempts: 3                 # total calls per deal
+  max_unclear_attempts: 2         # calls that connected but gave no clear tier
+  retry_delay_seconds: 20         # demo value; production: 900 (15 min)
+  call_poll_seconds: 3
+  call_max_wait_seconds: 300
+
+rocketlane:
+  base_url: https://api.rocketlane.com/api/1.0
+  app_url: https://subbu-1.rocketlane.com
+  project_owner_email: subburajanperumal@gmail.com   # Project Owner (CS manager account)
+  max_retries: 3
+  backoff_seconds: 2              # exponential: 2, 4, 8
+  invite_customer: false          # true in production (sends the customer a Rocketlane invite)
+  expected_task_count: 15
+  field_ids:                      # optional custom project fields; leave 0 to skip
+    plan_tier: 0
+    csm_model: 0
+    salesforce_opportunity: 0
+    account_executive: 0
+
+tiers:
+  Enterprise:
+    template_id: 0                # Rocketlane template "NovaCRM Onboarding - Enterprise (30 days)"
+    duration_days: 30
+    csm_model: Dedicated
+    channel_suffix: ent
+  Growth:
+    template_id: 0                # Rocketlane template "NovaCRM Onboarding - Growth (14 days)"
+    duration_days: 14
+    csm_model: Pooled
+    channel_suffix: grw
+
+slack:
+  escalation_channel: cs-escalations
+  workspace_url: https://novacrm-demo.slack.com
