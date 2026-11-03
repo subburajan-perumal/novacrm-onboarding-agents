@@ -45,7 +45,7 @@ class Escalator:
     def ask_ae_for_info(self, run_id: str, email: InboundEmail, problems: list[str]) -> None:
         bullets = "\n".join(f"  - {p}" for p in problems)
         body = (
-            f"Hi {email.sender_name.split()[0] if email.sender_name else 'there'},\n\n"
+            f"Hi {email.sender_name.split()[0].title() if email.sender_name else 'there'},\n\n"
             "Thanks for the deal notification. I couldn't start onboarding yet because:\n"
             f"{bullets}\n\n"
             "Please reply on this thread with the missing details (customer name, customer contact email "
