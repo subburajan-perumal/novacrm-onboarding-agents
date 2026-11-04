@@ -10,3 +10,4 @@ secrets/
 credentials.json
 token.json
 *.db
+demo/

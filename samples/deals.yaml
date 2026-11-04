@@ -90,3 +90,20 @@ ambiguous_demo:
     Close date: 3 Nov 2026
 
     - Subburajan Perumal
+
+enterprise_video:
+  subject: "Closed Won: Helios Freight - please start onboarding"
+  body: |
+    Hi CS team,
+
+    Helios Freight just signed. Please kick off their onboarding.
+
+    Customer: Helios Freight
+    Primary contact: Kiran Shah (kiran.shah@heliosfreight.com)
+    Salesforce opportunity: https://novacrm.lightning.force.com/lightning/r/Opportunity/0065g00000HeL88AAB/view
+    Close date: 4 Nov 2026
+    Notes: 75 seats, migrating from Zoho CRM; go-live needed before their Q1 planning.
+
+    Thanks,
+    Subburajan Perumal
+    Account Executive, NovaCRM

@@ -9,6 +9,7 @@ Then the Retell call record is polled until ended + analyzed, exactly like the p
 from __future__ import annotations
 
 import json
+import os
 import threading
 import time
 import uuid
@@ -18,8 +19,12 @@ from typing import Callable
 
 import httpx
 
+from ..config import ROOT
 from ..models import CallOutcome
 from .voice import RETELL_BASE, interpret_call
+
+AUDIO_DIR = ROOT / "data" / "demo_audio"          # scripted AE voice clips (demo recordings only)
+LAST_RING = ROOT / "data" / "last_ring.txt"       # latest ring URL, for scripted demo runs
 
 PAGE = """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Incoming call</title>
@@ -50,20 +55,63 @@ const poll = setInterval(async () => {           // missed-call timeout is decid
   if (s.state === "missed") { clearInterval(poll); done("Missed call"); }
 }, 1000);
 $("#decline").onclick = async () => { clearInterval(poll); await fetch(`/ring/${id}/decline`, {method: "POST"}); done("Call declined"); };
+// ---- demo mode: ?ae=enterprise | ?ae=ambiguous -> scripted AE voice replaces the microphone ----
+const AE = new URLSearchParams(location.search).get("ae");
+let ctx, dest, clips = {}, lastAgent = "", handled = "", unsureCount = 0, greeted = false;
+async function scriptedMic() {
+  ctx = new AudioContext(); await ctx.resume(); dest = ctx.createMediaStreamDestination();
+  for (const n of ["greet_ok", "enterprise", "yes", "unsure", "unsure2"]) {
+    clips[n] = await ctx.decodeAudioData(await (await fetch(`/audio/${n}.wav`)).arrayBuffer());
+  }
+  const real = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+  navigator.mediaDevices.getUserMedia = async c => (c && c.audio ? dest.stream : real(c));
+}
+const LINES = {greet_ok: "Sure, go ahead.", enterprise: "It's on the Enterprise plan.", yes: "Yes, that's correct.",
+  unsure: "Hmm, I think maybe Growth? I'm not really sure.", unsure2: "Honestly, I'm not sure. I need to check the contract."};
+const PLAN = {enterprise: ["greet_ok", "enterprise", "yes"], ambiguous: ["greet_ok", "unsure", "unsure2"]};
+let turn = 0;
+// Turn detection from the agent's audio: speech, then ~1.1 s of silence = the agent finished its turn.
+function attachVAD(stream) {
+  const sink = new Audio(); sink.srcObject = stream; sink.muted = true; sink.play().catch(() => {});
+  const src = ctx.createMediaStreamSource(stream), an = ctx.createAnalyser(); an.fftSize = 1024; src.connect(an);
+  const buf = new Float32Array(an.fftSize); let speaking = false, loudMs = 0, quietMs = 0;
+  setInterval(() => {
+    an.getFloatTimeDomainData(buf); let s = 0; for (const v of buf) s += v * v; const rms = Math.sqrt(s / buf.length);
+    if (rms > 0.015) { loudMs += 50; quietMs = 0; if (!speaking && loudMs >= 200) { speaking = true; agentStart(); } }
+    else { quietMs += 50; if (quietMs > 300) loudMs = 0; if (speaking && quietMs >= 1100) { speaking = false; agentStop(); } }
+  }, 50);
+}
+function hookPeerConnection() {
+  const Orig = window.RTCPeerConnection;
+  window.RTCPeerConnection = function (...a) {
+    const pc = new Orig(...a);
+    pc.addEventListener("track", e => { if (e.track.kind === "audio") attachVAD(e.streams[0] || new MediaStream([e.track])); });
+    return pc;
+  };
+  window.RTCPeerConnection.prototype = Orig.prototype;
+}
+function agentStart() { setStatus("Nova (agent) is speaking…"); }
+function agentStop() {
+  setStatus("Listening…");
+  addLine("Nova (agent)", `finished turn ${turn + 1}`, "agent");
+  const n = (PLAN[AE] || [])[turn++];
+  if (n) setTimeout(() => say(n), 500);
+}
+function addLine(who, text, cls) { const p = document.createElement("p"); p.className = cls; p.innerHTML = `<b>${who}:</b> ${text}`; $("#tx").appendChild(p); $("#tx").scrollTop = 1e9; }
+function say(n) {
+  const s = ctx.createBufferSource(); s.buffer = clips[n]; s.connect(dest); s.connect(ctx.destination); s.start();
+  addLine("AE (scripted voice)", LINES[n], "user");
+}
 $("#answer").onclick = async () => {
   clearInterval(poll); card.classList.remove("ringing"); $("#btns").style.display = "none"; setStatus("Connecting…");
+  if (AE) { await scriptedMic(); hookPeerConnection(); }
   const r = await fetch(`/ring/${id}/answer`, {method: "POST"});
   if (!r.ok) { setStatus("Call could not be connected"); return; }
   const c = await r.json();
   const client = new RetellWebClient();
-  client.on("call_started", () => setStatus("On call · speak normally"));
-  client.on("call_ended", () => setStatus("Call ended. You can close this tab."));
+  client.on("call_started", () => setStatus(AE ? "On call · AE voice: scripted stand-in (" + AE + ")" : "On call · speak normally"));
+  client.on("call_ended", () => setStatus("Call ended."));
   client.on("error", e => { setStatus("Call error: " + (e && e.message || e)); client.stopCall && client.stopCall(); });
-  client.on("update", u => {
-    if (!u || !u.transcript) return;
-    $("#tx").innerHTML = u.transcript.map(t => `<p class="${t.role}"><b>${t.role === "agent" ? "Nova" : "You"}:</b> ${t.content}</p>`).join("");
-    $("#tx").scrollTop = 1e9;
-  });
   await client.startCall({ callId: c.call_id, accessToken: c.access_token, transport: c.transport, iceServers: c.ice_servers });
 };
 </script></body></html>"""
@@ -107,11 +155,17 @@ class RetellWebCallVoice:
                 self.wfile.write(body)
 
             def _ring(self) -> tuple[str, _Ring | None, str]:
-                parts = self.path.strip("/").split("/")
+                parts = self.path.split("?")[0].strip("/").split("/")
                 rid = parts[1] if len(parts) > 1 else ""
                 return rid, voice.rings.get(rid), parts[2] if len(parts) > 2 else ""
 
             def do_GET(self):
+                if self.path.startswith("/audio/"):
+                    name = self.path.split("/")[-1]
+                    f = AUDIO_DIR / name
+                    if name.endswith(".wav") and f.parent == AUDIO_DIR and f.exists():
+                        return self._send(200, f.read_bytes(), "audio/wav")
+                    return self._send(404, b"{}")
                 rid, ring, action = self._ring()
                 if ring is None:
                     return self._send(404, b'{"error":"unknown call"}')
@@ -152,7 +206,9 @@ class RetellWebCallVoice:
         })
         self.rings[rid] = ring
         url = f"http://localhost:{self.port}/ring/{rid}"
-        if self.open_browser:
+        LAST_RING.parent.mkdir(parents=True, exist_ok=True)
+        LAST_RING.write_text(url)
+        if self.open_browser and os.environ.get("DEMO_NO_BROWSER") != "1":
             webbrowser.open(url, new=2)
 
         deadline = time.monotonic() + self.ring_timeout
