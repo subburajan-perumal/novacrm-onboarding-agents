@@ -1,0 +1,227 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 1012" width="1240" height="1012" role="img" aria-label="System architecture. An Orchestrator drives an Intake Agent and a Communication Agent. Each external service (Gmail, Retell, Rocketlane, Claude, Slack) sits behind one adapter. Deterministic guardrails decide what to trust from Claude, and an Escalator reaches the CS Manager by email and Slack." font-family="Arial, Helvetica, 'Liberation Sans', sans-serif">
+<title>NovaCRM onboarding agents: system architecture</title>
+<defs><marker id="a-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9 z" fill="#1A2233"/></marker><marker id="a-line" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9 z" fill="#667085"/></marker><marker id="a-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9 z" fill="#6B4FD8"/></marker><marker id="a-teal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9 z" fill="#0E7C72"/></marker><marker id="a-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9 z" fill="#C9441B"/></marker><marker id="a-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9 z" fill="#1F5FBF"/></marker></defs>
+<rect width="1240" height="1012" fill="#FFFFFF"/>
+<rect x="10" y="68" width="1220" height="74" rx="10" fill="#F4F5F8"/>
+<rect x="10" y="198" width="1220" height="152" rx="10" fill="#F4F5F8"/>
+<rect x="10" y="398" width="1220" height="132" rx="10" fill="#F4F5F8"/>
+<rect x="10" y="584" width="1220" height="274" rx="10" fill="#F4F5F8"/>
+<rect x="10" y="896" width="1220" height="102" rx="10" fill="#F4F5F8"/>
+<text x="44" y="32" font-size="19" fill="#1A2233" font-weight="700">NovaCRM onboarding agents: system architecture</text>
+<path d="M44 50 L74 50" fill="none" stroke="#667085" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-line)"/>
+<text x="80" y="54" font-size="12" fill="#566074">live call</text>
+<path d="M140 50 L170 50" fill="none" stroke="#667085" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="5 4" marker-end="url(#a-line)"/>
+<text x="176" y="54" font-size="12" fill="#566074">mocked, or not yet run end to end</text>
+<path d="M376 50 L406 50" fill="none" stroke="#1F5FBF" stroke-width="2.25" stroke-linejoin="round" marker-end="url(#a-blue)"/>
+<text x="412" y="54" font-size="12" fill="#566074">agent hand-off</text>
+<path d="M510 50 L540 50" fill="none" stroke="#C9441B" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-red)"/>
+<text x="546" y="54" font-size="12" fill="#566074">reaches a human</text>
+<rect x="656" y="43" width="16" height="14" rx="3" fill="#F1EEFD" stroke="#6B4FD8" stroke-width="1.25"/>
+<text x="678" y="54" font-size="12" fill="#566074">Claude proposes</text>
+<rect x="784" y="43" width="16" height="14" rx="3" fill="#E6F5F3" stroke="#0E7C72" stroke-width="1.25"/>
+<text x="806" y="54" font-size="12" fill="#566074">code decides</text>
+<text x="44" y="84" font-size="11.5" fill="#566074" font-weight="700" letter-spacing=".5">PEOPLE</text>
+<rect x="44" y="94" width="92" height="40" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="90.0" y="119" font-size="12.5" fill="#1A2233" font-weight="700" text-anchor="middle">AE</text>
+<rect x="148" y="94" width="92" height="40" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="194.0" y="119" font-size="12.5" fill="#1A2233" font-weight="700" text-anchor="middle">CS Manager</text>
+<rect x="256" y="94" width="92" height="40" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="302.0" y="119" font-size="12.5" fill="#1A2233" font-weight="700" text-anchor="middle">AE</text>
+<rect x="508" y="94" width="112" height="40" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="564.0" y="111" font-size="12.5" fill="#1A2233" font-weight="700" text-anchor="middle">CSM</text>
+<text x="564.0" y="126" font-size="11.5" fill="#566074" text-anchor="middle">Project Manager</text>
+<rect x="632" y="94" width="112" height="40" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="688.0" y="111" font-size="12.5" fill="#1A2233" font-weight="700" text-anchor="middle">CS Manager</text>
+<text x="688.0" y="126" font-size="11.5" fill="#566074" text-anchor="middle">Project Owner</text>
+<rect x="928" y="94" width="84" height="40" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="970.0" y="119" font-size="12.5" fill="#1A2233" font-weight="700" text-anchor="middle">CSM + AE</text>
+<rect x="1020" y="94" width="84" height="40" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25" stroke-dasharray="5 4"/>
+<text x="1062.0" y="119" font-size="12.5" fill="#1A2233" font-weight="700" text-anchor="middle">Customer</text>
+<rect x="1112" y="94" width="84" height="40" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="1154.0" y="119" font-size="12.5" fill="#1A2233" font-weight="700" text-anchor="middle">CS Manager</text>
+<path d="M126 134 L126 222" fill="none" stroke="#667085" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-line)" marker-start="url(#a-line)"/>
+<text x="120" y="158" font-size="11.5" fill="#566074" text-anchor="end">deal email and</text>
+<text x="120" y="171" font-size="11.5" fill="#566074" text-anchor="end">missing-field</text>
+<text x="120" y="184" font-size="11.5" fill="#566074" text-anchor="end">asks on thread</text>
+<path d="M166 222 L166 134" fill="none" stroke="#C9441B" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-red)"/>
+<text x="172" y="165" font-size="11.5" fill="#A2340F">escalation</text>
+<text x="172" y="178" font-size="11.5" fill="#A2340F">email</text>
+<path d="M274 134 L274 222" fill="none" stroke="#667085" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-line)" marker-start="url(#a-line)"/>
+<text x="282" y="165" font-size="11.5" fill="#566074">live web call: asks the tier,</text>
+<text x="282" y="178" font-size="11.5" fill="#566074">reads it back, needs a yes</text>
+<path d="M526 222 L526 134" fill="none" stroke="#C9441B" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-red)"/>
+<text x="532" y="165" font-size="11.5" fill="#A2340F">overdue</text>
+<text x="532" y="178" font-size="11.5" fill="#A2340F">&gt; 1 day</text>
+<path d="M650 222 L650 134" fill="none" stroke="#C9441B" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-red)"/>
+<text x="656" y="165" font-size="11.5" fill="#A2340F">overdue</text>
+<text x="656" y="178" font-size="11.5" fill="#A2340F">&gt; 4 days</text>
+<path d="M946 222 L946 134" fill="none" stroke="#667085" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-line)"/>
+<text x="952" y="165" font-size="11.5" fill="#566074">invited to</text>
+<text x="952" y="178" font-size="11.5" fill="#566074">channel</text>
+<path d="M1038 222 L1038 134" fill="none" stroke="#667085" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="5 4" marker-end="url(#a-line)"/>
+<text x="1044" y="158" font-size="11.5" fill="#566074">mocked:</text>
+<text x="1044" y="171" font-size="11.5" fill="#566074">Slack</text>
+<text x="1044" y="184" font-size="11.5" fill="#566074">Connect</text>
+<path d="M1130 222 L1130 134" fill="none" stroke="#C9441B" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-red)"/>
+<text x="1136" y="165" font-size="11.5" fill="#A2340F">escalation</text>
+<text x="1136" y="178" font-size="11.5" fill="#A2340F">post</text>
+<text x="44" y="214" font-size="11.5" fill="#566074" font-weight="700" letter-spacing=".5">SERVICES</text>
+<rect x="44" y="222" width="196" height="120" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="56" y="243" font-size="13.5" fill="#1A2233" font-weight="700">Gmail API</text>
+<text x="56" y="262" font-size="12" fill="#1A2233">CS team inbox</text>
+<text x="56" y="278" font-size="12" fill="#1A2233">Labels track each message:</text>
+<text x="56" y="294" font-size="12" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">seen</tspan>, <tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">processed</tspan>,</text>
+<text x="56" y="310" font-size="12" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">needs-info</tspan>, <tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">escalated</tspan></text>
+<rect x="256" y="222" width="236" height="120" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="268" y="243" font-size="13.5" fill="#1A2233" font-weight="700">Retell AI voice agent “Nova”</text>
+<text x="268" y="262" font-size="12" fill="#1A2233">Never suggests a tier</text>
+<text x="268" y="278" font-size="12" fill="#1A2233">Post-call analysis:</text>
+<text x="268" y="294" font-size="12" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">plan_tier</tspan>, <tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">readback_confirmed</tspan></text>
+<rect x="268" y="310" width="212" height="24" rx="5" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25" stroke-dasharray="5 4"/>
+<text x="374" y="326" font-size="11.5" fill="#566074" text-anchor="middle">Twilio SIP bridge: not yet run</text>
+<rect x="508" y="222" width="236" height="120" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="520" y="243" font-size="13.5" fill="#1A2233" font-weight="700">Rocketlane</text>
+<text x="520" y="262" font-size="12" fill="#1A2233">Templates: Enterprise 30 days,</text>
+<text x="520" y="278" font-size="12" fill="#1A2233">Growth 14 days; 4 phases, 15 tasks</text>
+<rect x="520" y="288" width="212" height="46" rx="5" fill="#FDEFE9" stroke="#C9441B" stroke-width="1.25"/>
+<text x="626" y="306" font-size="12" fill="#A2340F" font-weight="700" text-anchor="middle">Overdue-task automation</text>
+<text x="626" y="323" font-size="11.5" fill="#1A2233" text-anchor="middle">configured here, not in our code</text>
+<rect x="760" y="222" width="152" height="120" rx="8" fill="#F1EEFD" stroke="#6B4FD8" stroke-width="1.25"/>
+<text x="772" y="243" font-size="13.5" fill="#45309F" font-weight="700">Claude</text>
+<text x="772" y="262" font-size="12" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">claude-opus-5-5</tspan></text>
+<text x="772" y="278" font-size="12" fill="#1A2233">Structured outputs</text>
+<text x="772" y="294" font-size="12" fill="#1A2233">Reads and drafts;</text>
+<text x="772" y="310" font-size="12" fill="#1A2233">never decides</text>
+<rect x="928" y="222" width="268" height="120" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="940" y="243" font-size="13.5" fill="#1A2233" font-weight="700">Slack Web API</text>
+<text x="940" y="262" font-size="12" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">#onb-&lt;customer&gt;-ent|grw</tspan>, one per deal:</text>
+<text x="940" y="278" font-size="12" fill="#1A2233">topic, purpose, welcome, plan link</text>
+<text x="940" y="294" font-size="12" fill="#1A2233"></text>
+<text x="940" y="310" font-size="12" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">#cs-escalations</tspan>: alerts the CS Manager</text>
+<path d="M126 342 L126 422" fill="none" stroke="#667085" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-line)" marker-start="url(#a-line)"/>
+<text x="134" y="378" font-size="11.5" fill="#566074">list, get, modify, send</text>
+<path d="M274 342 L274 422" fill="none" stroke="#667085" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-line)" marker-start="url(#a-line)"/>
+<text x="282" y="378" font-size="11.5" fill="#566074">create-web-call, poll get-call</text>
+<path d="M526 342 L526 422" fill="none" stroke="#667085" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-line)" marker-start="url(#a-line)"/>
+<text x="534" y="378" font-size="11.5" fill="#566074"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">/projects</tspan>, <tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">/tasks</tspan>, <tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">/users</tspan></text>
+<path d="M778 342 L778 422" fill="none" stroke="#667085" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-line)" marker-start="url(#a-line)"/>
+<text x="786" y="378" font-size="11.5" fill="#566074">Messages API</text>
+<path d="M946 342 L946 422" fill="none" stroke="#667085" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-line)" marker-start="url(#a-line)"/>
+<text x="954" y="378" font-size="11.5" fill="#566074"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">conversations.*</tspan>, <tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">chat.postMessage</tspan></text>
+<text x="44" y="414" font-size="11.5" fill="#566074" font-weight="700" letter-spacing=".5">ADAPTERS</text>
+<text x="282" y="414" font-size="11.5" fill="#566074">One Protocol per service; tests use fakes</text>
+<text x="534" y="414" font-size="11.5" fill="#566074"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">src/novacrm/adapters/</tspan></text>
+<rect x="44" y="422" width="196" height="100" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="56" y="443" font-size="14" fill="#1A2233" font-weight="700"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="13.2">MailClient</tspan></text>
+<text x="56" y="462" font-size="12" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">GmailClient</tspan></text>
+<text x="56" y="478" font-size="12" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">ConsoleMail</tspan> for <tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">run-sample</tspan></text>
+<rect x="256" y="422" width="236" height="100" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="268" y="443" font-size="14" fill="#1A2233" font-weight="700"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="13.2">VoiceClient</tspan></text>
+<text x="268" y="462" font-size="11.5" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">RetellWebCallVoice</tspan> web (demo)</text>
+<text x="268" y="477" font-size="11.5" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">RetellTwilioVoice</tspan> phone, not run</text>
+<text x="268" y="492" font-size="11.5" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">RetellNativeVoice</tspan> US numbers</text>
+<text x="268" y="507" font-size="11.5" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">UnconfiguredVoice</tspan> always fails</text>
+<rect x="508" y="422" width="236" height="100" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="520" y="443" font-size="14" fill="#1A2233" font-weight="700"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="13.2">ProjectClient</tspan></text>
+<text x="520" y="462" font-size="11.5" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">RocketlaneClient</tspan></text>
+<text x="520" y="478" font-size="11.5" fill="#1A2233">Retries 5xx, 429, timeouts</text>
+<text x="520" y="494" font-size="11.5" fill="#1A2233">Looks for the project before re-POST</text>
+<rect x="760" y="422" width="152" height="100" rx="8" fill="#F1EEFD" stroke="#6B4FD8" stroke-width="1.25"/>
+<text x="772" y="443" font-size="14" fill="#45309F" font-weight="700"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="13.2">LLMClient</tspan></text>
+<text x="772" y="462" font-size="11.5" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">ClaudeLLM</tspan></text>
+<text x="772" y="477" font-size="11.5" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">extract_deal</tspan></text>
+<text x="772" y="492" font-size="11.5" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">judge_transcript</tspan></text>
+<text x="772" y="507" font-size="11.5" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">draft_welcome</tspan></text>
+<rect x="928" y="422" width="268" height="100" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="940" y="443" font-size="14" fill="#1A2233" font-weight="700"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="13.2">ChatClient</tspan></text>
+<text x="940" y="462" font-size="12" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">SlackClient</tspan></text>
+<text x="940" y="478" font-size="12" fill="#1A2233">Channels, topic, messages, invites</text>
+<path d="M126 522 L126 610" fill="none" stroke="#667085" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-line)" marker-start="url(#a-line)"/>
+<text x="134" y="552" font-size="11.5" fill="#566074"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">list_new</tspan> every 15 s,</text>
+<text x="134" y="566" font-size="11.5" fill="#566074"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">thread_text</tspan>, <tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">add_labels</tspan></text>
+<path d="M374 610 L374 522" fill="none" stroke="#667085" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-line)" marker-start="url(#a-line)"/>
+<text x="382" y="560" font-size="11.5" fill="#566074"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">place_call</tspan></text>
+<path d="M540 610 L540 522" fill="none" stroke="#667085" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-line)" marker-start="url(#a-line)"/>
+<text x="548" y="543" font-size="11.5" fill="#566074"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">find_existing_projects</tspan></text>
+<text x="548" y="556" font-size="11.5" fill="#566074"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">create_project</tspan></text>
+<text x="548" y="569" font-size="11.5" fill="#566074"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">list_tasks</tspan></text>
+<path d="M600 610 L600 583 Q600 576 607 576 L783 576 Q790 576 790 569 L790 522" fill="none" stroke="#6B4FD8" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-violet)" marker-start="url(#a-violet)"/>
+<text x="784" y="560" font-size="11.5" fill="#45309F" text-anchor="end">extract, judge</text>
+<path d="M880 610 L880 522" fill="none" stroke="#6B4FD8" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-violet)" marker-start="url(#a-violet)"/>
+<text x="888" y="560" font-size="11.5" fill="#45309F">welcome</text>
+<path d="M960 610 L960 522" fill="none" stroke="#667085" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-line)" marker-start="url(#a-line)"/>
+<text x="968" y="552" font-size="11.5" fill="#566074"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">create_channel</tspan>, <tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">set_topic</tspan>,</text>
+<text x="968" y="566" font-size="11.5" fill="#566074"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">post_message</tspan>, <tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">invite</tspan></text>
+<text x="44" y="600" font-size="11.5" fill="#566074" font-weight="700" letter-spacing=".5">PROCESS</text>
+<text x="134" y="600" font-size="11.5" fill="#566074"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">uv run novacrm watch | once | resume</tspan></text>
+<text x="608" y="600" font-size="11.5" fill="#566074"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">cli.build()</tspan> wires adapters into agents</text>
+<rect x="44" y="610" width="172" height="120" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="56" y="631" font-size="13.5" fill="#1A2233" font-weight="700">Orchestrator</text>
+<text x="56" y="650" font-size="12" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">orchestrator.py</tspan></text>
+<text x="56" y="667" font-size="12" fill="#1A2233">Owns the run state</text>
+<text x="56" y="684" font-size="12" fill="#1A2233">Idempotent per email</text>
+<text x="56" y="701" font-size="12" fill="#1A2233">Hand-off and resume</text>
+<rect x="276" y="610" width="352" height="120" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="288" y="631" font-size="13.5" fill="#1A2233" font-weight="700">Intake &amp; Routing Agent</text>
+<text x="288" y="650" font-size="12" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">agents/intake.py</tspan></text>
+<rect x="285" y="662" width="106" height="58" rx="6" fill="#F4F5F8" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="338" y="687" font-size="12" fill="#1A2233" font-weight="700" text-anchor="middle">1. Parse and</text>
+<text x="338" y="703" font-size="12" fill="#1A2233" font-weight="700" text-anchor="middle">validate</text>
+<rect x="399" y="662" width="106" height="58" rx="6" fill="#F4F5F8" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="452" y="687" font-size="12" fill="#1A2233" font-weight="700" text-anchor="middle">2. Confirm tier</text>
+<text x="452" y="703" font-size="12" fill="#1A2233" font-weight="700" text-anchor="middle">by voice</text>
+<rect x="513" y="662" width="106" height="58" rx="6" fill="#F4F5F8" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="566" y="687" font-size="12" fill="#1A2233" font-weight="700" text-anchor="middle">3. Create</text>
+<text x="566" y="703" font-size="12" fill="#1A2233" font-weight="700" text-anchor="middle">project</text>
+<rect x="660" y="610" width="144" height="120" rx="8" fill="#E6F5F3" stroke="#0E7C72" stroke-width="1.25"/>
+<text x="672" y="631" font-size="13.5" fill="#0A5F57" font-weight="700">Guardrails</text>
+<text x="672" y="650" font-size="12" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">guardrails.py</tspan></text>
+<text x="672" y="667" font-size="12" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">validate_deal</tspan></text>
+<text x="672" y="684" font-size="12" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">decide_tier</tspan></text>
+<text x="672" y="701" font-size="12" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">check_welcome</tspan></text>
+<rect x="836" y="610" width="360" height="120" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="848" y="631" font-size="13.5" fill="#1A2233" font-weight="700">Communication Agent</text>
+<text x="848" y="650" font-size="12" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">agents/communication.py</tspan></text>
+<text x="848" y="667" font-size="12" fill="#1A2233">Channel name, topic and purpose by tier</text>
+<text x="848" y="684" font-size="12" fill="#1A2233">Welcome: Claude draft, else static template</text>
+<text x="848" y="701" font-size="12" fill="#1A2233">Invites the CSM and AE</text>
+<path d="M216 672 L276 672" fill="none" stroke="#667085" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-line)"/>
+<text x="246" y="650" font-size="11.5" fill="#566074" text-anchor="middle">calls</text>
+<text x="246" y="663" font-size="11.5" fill="#566074" text-anchor="middle">1, 2, 3</text>
+<path d="M628 672 L660 672" fill="none" stroke="#0E7C72" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-teal)"/>
+<path d="M836 672 L804 672" fill="none" stroke="#0E7C72" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-teal)"/>
+<path d="M170 730 L170 745 Q170 752 177 752 L1009 752 Q1016 752 1016 745 L1016 730" fill="none" stroke="#1F5FBF" stroke-width="2.25" stroke-linejoin="round" marker-end="url(#a-blue)"/>
+<rect x="402" y="742" width="566" height="20" rx="4" fill="#EAF1FC"/>
+<text x="685" y="756" font-size="12" fill="#174A96" font-weight="700" text-anchor="middle">4.  <tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="11.3">comm.run(OnboardingHandoff)</tspan>: deal + confirmed tier + project. The agents never call each other.</text>
+<rect x="44" y="776" width="330" height="70" rx="8" fill="#FDEFE9" stroke="#C9441B" stroke-width="1.25"/>
+<text x="56" y="797" font-size="13.5" fill="#A2340F" font-weight="700">Escalator  <tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="12.7">escalation.py</tspan></text>
+<text x="56" y="816" font-size="11.5" fill="#1A2233">Emails the CS Manager: run ID, reason, transcript</text>
+<text x="56" y="831" font-size="11.5" fill="#1A2233">Asks the AE on the thread instead of guessing</text>
+<path d="M90 730 L90 776" fill="none" stroke="#C9441B" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-red)"/>
+<path d="M320 730 L320 776" fill="none" stroke="#C9441B" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-red)"/>
+<text x="96" y="758" font-size="11.5" fill="#A2340F">escalate</text>
+<text x="326" y="771" font-size="11.5" fill="#A2340F">escalate, ask</text>
+<path d="M44 811 L35 811 Q28 811 28 804 L28 479 Q28 472 35 472 L44 472" fill="none" stroke="#C9441B" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-red)"/>
+<text x="20" y="690" font-size="11.5" fill="#A2340F" transform="rotate(-90 20 690)">send, reply, label</text>
+<path d="M374 811 L1207 811 Q1214 811 1214 804 L1214 479 Q1214 472 1207 472 L1196 472" fill="none" stroke="#C9441B" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-red)"/>
+<text x="400" y="803" font-size="11.5" fill="#A2340F"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">post_message</tspan> to <tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">#cs-escalations</tspan>. Best effort: the email has already gone out, so a Slack failure never blocks it.</text>
+<path d="M230 858 L230 920" fill="none" stroke="#667085" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-line)" marker-start="url(#a-line)"/>
+<text x="238" y="880" font-size="11.5" fill="#566074">Orchestrator, Intake: state and results</text>
+<path d="M618 858 L618 920" fill="none" stroke="#667085" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-line)"/>
+<text x="626" y="880" font-size="11.5" fill="#566074">agents, Orchestrator, Escalator: every step</text>
+<path d="M1008 920 L1008 858" fill="none" stroke="#667085" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a-line)"/>
+<text x="1016" y="880" font-size="11.5" fill="#566074">read at startup</text>
+<text x="44" y="912" font-size="11.5" fill="#566074" font-weight="700" letter-spacing=".5">STATE</text>
+<rect x="44" y="920" width="372" height="70" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="56" y="941" font-size="13.5" fill="#1A2233" font-weight="700">RunStore  <tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="12.7">data/runs.db</tspan></text>
+<text x="56" y="960" font-size="11.5" fill="#1A2233">SQLite. One row per email: state, tier, project, channel, attempts</text>
+<text x="56" y="975" font-size="11.5" fill="#1A2233"><tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">message_id</tspan> is UNIQUE: the idempotency key</text>
+<rect x="432" y="920" width="372" height="70" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="444" y="941" font-size="13.5" fill="#1A2233" font-weight="700">AuditLog  <tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="12.7">logs/audit.jsonl</tspan></text>
+<text x="444" y="960" font-size="11.5" fill="#1A2233">Append-only: time, input, output, decision, rationale</text>
+<text x="444" y="975" font-size="11.5" fill="#1A2233">Phone numbers masked. <tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="10.8">novacrm show &lt;run&gt;</tspan> prints the timeline</text>
+<rect x="820" y="920" width="376" height="70" rx="8" fill="#FFFFFF" stroke="#C5CBD6" stroke-width="1.25"/>
+<text x="832" y="941" font-size="13.5" fill="#1A2233" font-weight="700">Config  <tspan font-family="Consolas, Menlo, 'DejaVu Sans Mono', monospace" font-size="12.7">config/*.yaml</tspan></text>
+<text x="832" y="960" font-size="11.5" fill="#1A2233">Tier to template, days, CSM model; AE directory; CSM roster</text>
+<text x="832" y="975" font-size="11.5" fill="#1A2233">Template and CSM come from here, never from the LLM</text>
+</svg>

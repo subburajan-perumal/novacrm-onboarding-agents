@@ -2,18 +2,10 @@
 
 Multi-agent automation of NovaCRM's customer onboarding (Rocketlane FDE take-home).
 
-```
-AE deal email ──> Intake & Routing Agent ──────────────────────────────> Communication Agent
- (Gmail inbox)     • Claude extracts fields + evidence                      • Slack channel per customer
-                   • guardrails validate (ask AE if anything is missing)    • tier-specific name/topic
-                   • Retell voice agent calls the AE to confirm the tier    • Claude welcome msg + checks
-                   • Rocketlane project from the Enterprise/Growth template • invites CSM + AE
-                   • duplicate check, retries, park/resume                  • customer Slack Connect (mocked)
-                                   │
-                                   └─> Rocketlane automation: overdue 1d → Project Manager, 4d → Project Owner
-```
+[![System architecture: an Orchestrator drives an Intake Agent and a Communication Agent. Each external service sits behind one adapter, guardrails decide what to trust, and an Escalator reaches the CS Manager.](docs/diagrams/system-architecture.svg)](docs/architecture.md)
 
-Design and assumptions: [`docs/requirements.md`](docs/requirements.md).
+- How it works, with the deal lifecycle and the voice call: [`docs/architecture.md`](docs/architecture.md)
+- Design and assumptions: [`docs/requirements.md`](docs/requirements.md)
 
 ## Layout
 
