@@ -24,7 +24,9 @@ FONT = "C\\:/Windows/Fonts/segoeuib.ttf"
 EXTRA = {  # captions for stills without narration
     "x_overview": "Rocketlane overview: 04 Nov → 03 Dec · 0/15 tasks · Rachel (dedicated CSM) on the team",
     "x_escalation": "#cs-escalations: CS manager asked to decide (also emailed) · no project created",
+    "x_growth_call": "Real AE voice on the Retell web call · audio and transcript from Retell",
 }
+GROWTH_CALL = "call_c2d4ed5a71d077b70f7e4f82a8a"
 
 
 def esc_path(p: Path) -> str:
@@ -130,21 +132,49 @@ def render_still(img: str, key: str, out: Path, narrated: bool, hold: float | No
     return length
 
 
+def render_call_still(img: str, key: str, out: Path, call: dict) -> float:
+    """Hold a still while the real call audio plays."""
+    length = call["end"] - call["start"] + 1.0
+    g = [f"[0:v]scale={W}:{CH}:force_original_aspect_ratio=decrease,pad={W}:{CH}:(ow-iw)/2:(oh-ih)/2:color={BG},"
+         f"pad={W}:{H}:0:0:color={BG},fps={FPS}[v0]", caption_filter("v0", "v1", key, 0, length, 0),
+         f"[1:a]aresample=48000,volume=1.6,apad,atrim=0:{length:.3f}[aout]"]
+    script = D / f"filter_{out.stem}.txt"
+    script.write_text(";".join(g), encoding="utf-8")
+    run(["-loop", "1", "-t", f"{length:.2f}", "-i", str(SEG / img), "-i", str(ROOT / call["file"]),
+         "-/filter_complex", str(script), "-map", "[v1]", "-map", "[aout]", "-c:v", "libx264", "-preset", "medium",
+         "-crf", "22", "-pix_fmt", "yuv420p", "-r", str(FPS), "-c:a", "aac", "-b:a", "160k", "-ar", "48000",
+         "-ac", "2", "-shortest", str(out)])
+    print(f"{img}: {length:.1f}s (call audio)")
+    return length
+
+
 def main() -> None:
     tl, sg, calls = load_events()
     parts = D / "parts"
     parts.mkdir(exist_ok=True)
+    growth = [("still", "raw/growth_ring.png", "g01", True), ("call", "still_growth_call.png", "x_growth_call"),
+              ("still", "still_growth_log.png", "g02", True, 11.0), ("still", "raw/rl_growth.jpg", "g03", True, 9.0),
+              ("still", "raw/slack_growth.jpg", "g04", True, 9.0)]
     plan = [
-        ("video", "s1"), ("video", "s2"),
+        ("video", "s1"), ("still", "still_email.png", "p01", True, 14.0), ("video", "s2"),
         ("still", "still_rl_plan.jpg", "c07", True), ("still", "still_rl_overview.jpg", "x_overview", False),
         ("still", "still_slack.jpg", "c08", True), ("still", "still_automation.jpg", "c09", True),
-        ("video", "s4"), ("video", "s5"), ("still", "still_escalation.jpg", "x_escalation", False),
-        ("video", "s7"),
+        ("still", "still_recipients.png", "a01", True, 15.0),
+        *growth,
+        ("video", "s4"), ("still", "still_reply.png", "r01", True, 8.0),
+        ("video", "s5"), ("still", "still_escalation.jpg", "x_escalation", False),
+        ("still", "raw/still_audit.png", "c16", True), ("still", "still_tests.png", "c17", True, 13.0),
+        ("still", "still_outro.png", "c18", True),
     ]
     files, total = [], 0.0
     for i, item in enumerate(plan):
         out = parts / f"{i:02d}.mp4"
-        total += render_video(item[1], tl, sg, calls, out) if item[0] == "video" else render_still(item[1], item[2], out, item[3])
+        if item[0] == "video":
+            total += render_video(item[1], tl, sg, calls, out)
+        elif item[0] == "call":
+            total += render_call_still(item[1], item[2], out, calls[GROWTH_CALL])
+        else:
+            total += render_still(item[1], item[2], out, item[3], item[4] if len(item) > 4 else None)
         files.append(out)
     lst = parts / "list.txt"
     lst.write_text("".join(f"file '{f.as_posix()}'\n" for f in files), encoding="utf-8")

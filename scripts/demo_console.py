@@ -98,7 +98,7 @@ The conversation with the Retell agent is real. Production rings the AE's mobile
 <li>Slack Connect invite to the customer (paid Slack plan); here it is logged as mocked</li>
 <li>Salesforce API for AE phone and a tier cross-check; Postgres + tracing instead of SQLite/JSONL</li>
 <li>Secrets manager, scheduled resume of parked runs, alerting</li></ul>
-<div class="note">42 automated tests: happy path, validation, template accuracy, Rocketlane down, existing project, no answer, ambiguous tier, idempotency.</div>""",
+<div class="note">45 automated tests: happy path, validation, template accuracy, Rocketlane down, existing project, no answer, ambiguous tier, idempotency.</div>""",
 }
 
 
