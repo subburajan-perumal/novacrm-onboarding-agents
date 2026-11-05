@@ -91,6 +91,23 @@ ambiguous_demo:
 
     - Subburajan Perumal
 
+enterprise_showcase:
+  subject: "Closed Won: Atlas Freight - please start onboarding"
+  body: |
+    Hi CS team,
+
+    Atlas Freight just signed. Please kick off their onboarding.
+
+    Customer: Atlas Freight
+    Primary contact: Maya Iyer (maya.iyer@atlasfreight.com)
+    Salesforce opportunity: https://novacrm.lightning.force.com/lightning/r/Opportunity/0065g00000AtL42AAB/view
+    Close date: 6 Nov 2026
+    Notes: 90 seats across two regions, migrating from HubSpot; go-live needed before their Q1 planning.
+
+    Thanks,
+    Subburajan Perumal
+    Account Executive, NovaCRM
+
 enterprise_video:
   subject: "Closed Won: Helios Freight - please start onboarding"
   body: |

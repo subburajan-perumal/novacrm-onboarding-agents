@@ -126,7 +126,7 @@ Each run is keyed by the Gmail message ID (idempotent), and the Salesforce oppor
 | Configuration | Workspace & users configured · Pipelines & custom fields · Integrations connected · Admin training | 16–24 | 8–11 |
 | Go-Live | Go-live readiness check (instructions say to wait for the data sign-off) · Go-live + handoff summary to Support | 25–30 | 12–14 |
 
-Rocketlane adjusts task dates when it imports a template, so individual task dates can differ from these day numbers. The project's start and due dates match the plan.
+Rocketlane adjusts task dates when it imports a template, so individual task dates can differ from these day numbers. It also moves a due date that falls on a weekend to the next working day.
 
 ### 4.4 Communication Agent
 
