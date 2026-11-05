@@ -25,9 +25,9 @@ Design and assumptions: [`docs/requirements.md`](docs/requirements.md).
 | `src/novacrm/guardrails.py` | Field validation + grounding, tier acceptance rule, welcome-message check |
 | `src/novacrm/escalation.py` | Human-in-the-loop: ask the AE, escalate to the CS Manager |
 | `src/novacrm/audit.py` | JSONL audit log (timestamp, input, output, decision, rationale) |
-| `src/novacrm/adapters/` | Gmail, Claude, Retell+Twilio voice, Rocketlane, Slack |
+| `src/novacrm/adapters/` | Gmail, Claude, Retell voice (web call or Twilio), Rocketlane, Slack |
 | `config/` | Tier → template/duration/CSM model, AE directory, CSM roster |
-| `tests/` | 42 offline tests with fakes for every external system |
+| `tests/` | 45 offline tests with fakes for every external system |
 
 ## Setup
 
@@ -44,11 +44,14 @@ uv run python scripts/gmail_auth.py   # one-time Gmail consent -> secrets/token.
 | Claude | `ANTHROPIC_API_KEY` |
 | Rocketlane | API key (Settings → API); template IDs and optional field IDs in `config/settings.yaml` |
 | Retell AI | API key; `setup-retell` creates the agent (prompt + post-call analysis `plan_tier`, `readback_confirmed`) |
-| Twilio | Account SID, auth token, a number; India enabled in Voice geo permissions; AE phone verified (trial) |
+| Twilio | Only for `voice.mode: twilio`: account SID, auth token, a number; India enabled in Voice geo permissions; AE phone verified (trial) |
 | Slack | Bot token with `channels:manage, channels:read, chat:write, users:read, users:read.email` |
 | Gmail | OAuth desktop client JSON at `secrets/credentials.json` (first run opens a browser to consent) |
 
-Why Twilio: Retell-purchased numbers only dial US numbers, so the call uses Retell's "dial to SIP URI" custom telephony: register the call with Retell, Twilio rings the AE and bridges to `sip:{call_id}@sip.retellai.com`.
+**Voice modes** (`voice.mode` in `config/settings.yaml`):
+
+- `web` (default, used in the demo): the AE answers a local "incoming call" page and talks to the same Retell agent over a web call. No phone number is needed. This is not a phone line.
+- `twilio` (production path): Retell-purchased numbers only dial US numbers, so the call uses Retell's "dial to SIP URI" custom telephony: register the call with Retell, Twilio rings the AE and bridges to `sip:{call_id}@sip.retellai.com`. This path hasn't been run end to end yet.
 
 ### Rocketlane workspace setup
 
@@ -74,7 +77,7 @@ Samples (`samples/deals.yaml`): `enterprise_ok`, `growth_ok`, `missing_fields`, 
 - Required fields must be present, valid **and found verbatim in the email**; otherwise the agent replies on the thread asking for them.
 - No project until the AE gives a clear tier on the call, confirms the read-back, and an independent Claude read of the transcript agrees. No answer → 3 calls, then escalate. Unclear → 1 re-call, then escalate. No default tier, ever.
 - Template, duration and CSM come from config keyed by the confirmed tier, never from the LLM.
-- Duplicate check before creation; Salesforce opportunity ID stored as `externalReferenceId`; re-runs adopt rather than duplicate.
+- Duplicate check before creation; the Salesforce opportunity link is stored in the project's "Salesforce Opportunity" field; re-runs adopt rather than duplicate.
 - Rocketlane 5xx/timeouts retry with backoff, then the run is parked and the CS Manager is told.
 - Welcome message checked for tier consistency, with a static fallback.
 - Every step audited to `logs/audit.jsonl`; phone numbers masked.

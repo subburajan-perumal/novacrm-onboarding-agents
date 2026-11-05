@@ -1,6 +1,6 @@
 # NovaCRM Customer Onboarding Automation: Requirements & Workflow Analysis
 
-**Author:** Subburajan Perumal, Forward Deployed Engineer candidate · **Date:** 3 Nov 2026
+**Author:** Subburajan Perumal, Forward Deployed Engineer candidate · **Date:** 6 Nov 2026  
 **Scope:** Part 1 of the Rocketlane FDE take-home. Parts 2–4 (agents, guardrails, tests) are in the repository; this document is the design they implement.
 
 ---
@@ -31,14 +31,14 @@ Two plan tiers change the shape of onboarding:
 |---|---|---|
 | "We sometimes mix up the templates." | Tier is not in the AE's email; a person picks the template from memory. | Make the tier an explicit, verified input. Map tier → template by configuration, never by judgment. |
 | "Escalation falls through the cracks." | Escalation relies on someone noticing a stale task. | Escalate automatically from the system of record (Rocketlane automation), on a fixed schedule. |
-| "Data migration tasks were marked done but the data wasn't verified." | "Done" is self-reported by the CSM; the customer never signs off. | Add an explicit customer verification task with approval, and make Go-Live depend on it. |
+| "Data migration tasks were marked done but the data wasn't verified." | "Done" is self-reported by the CSM; the customer never signs off. | Add an explicit customer data verification sign-off before Go-Live. Built today as a milestone with instructions; a hard dependency and formal customer approval are the production step (§8). |
 | Manual project + channel setup for every deal | Repetitive work across 3 tools | Automate intake → project → channel end to end, with a human only on exceptions. |
 | Inconsistent kickoff experience | Channel names, topics and first messages are ad hoc. | Generate a consistent, tier-specific channel and welcome message. |
 
 ## 3. Proposed agentic workflow
 
 ```mermaid
-flowchart LR
+flowchart TD
     A[AE sends deal email<br/>to CS inbox] --> B[Intake Agent<br/>watches Gmail]
     B --> C{Claude extracts fields<br/>+ verbatim evidence}
     C -->|not a deal| X1[Ignore + log]
@@ -96,7 +96,7 @@ Each run is keyed by the Gmail message ID (idempotent), and the Salesforce oppor
 
 - The email does not carry the tier, and a tier written in the email is ignored for decision purposes: only the AE's spoken confirmation counts.
 - A Retell AI voice agent calls the AE. Script: ask "Enterprise or Growth?", read the answer back, require an explicit yes. Never suggest a tier.
-- **Transport.** Production: the same agent rings the AE's mobile (number from the AE directory) over a Twilio number, bridged to Retell by SIP, because Retell-owned numbers only dial US numbers. Demo: calling Indian mobiles needs a paid or ID-verified telephony account, so the video uses Retell's web-call transport: the AE answers an "Incoming call" page and has the same live voice conversation. Decline, or no answer within 45 s, counts as "no answer". Switching is one config value (`voice.mode: twilio`).
+- **Transport.** Production: the same agent rings the AE's mobile (number from the AE directory) over a Twilio number, bridged to Retell by SIP, because Retell-owned numbers only dial US numbers. Demo: calling Indian mobiles needs a paid or ID-verified telephony account, so the video uses Retell's web-call transport: the AE answers an "Incoming call" page and has the same live voice conversation. Decline, or no answer within 45 s, counts as "no answer". The AE's voice is a scripted text-to-speech stand-in in the Enterprise and negative runs, and a real person in the Growth run. Switching to the phone path is one config value (`voice.mode: twilio`), but that path hasn't been run end to end yet.
 - Retell's post-call analysis returns `plan_tier` (Enterprise / Growth / Unclear) and `readback_confirmed`. Claude then reads the transcript independently.
 - **Accept only if** the call connected, the voice agent captured exactly one tier, the AE confirmed the read-back, and the independent transcript check agrees.
 - **No answer / busy / voicemail:** retry up to 3 calls in total (demo: 20 s apart; production: 15 min).
@@ -114,7 +114,7 @@ Each run is keyed by the Gmail message ID (idempotent), and the Salesforce oppor
 
 - Template IDs come from configuration, keyed by the confirmed tier. The LLM never chooses them.
 - Duplicate check first: by Salesforce opportunity ID and by customer name. A match escalates instead of creating.
-- After creation the agent lists the project's tasks and compares them with the template (15 tasks, 4 phases).
+- After creation the agent lists the project's tasks and compares them with the template (15 tasks, 4 phases). A mismatch is logged and the CS Manager is notified.
 - Rocketlane errors: 5xx / 429 / timeouts retry 3 times with exponential backoff; then the run is **parked** and the CS Manager is told; `novacrm resume` finishes it later without calling the AE again. 4xx errors (bad config) escalate immediately.
 
 **Template (both tiers, 15 tasks):**
@@ -122,9 +122,11 @@ Each run is keyed by the Gmail message ID (idempotent), and the Salesforce oppor
 | Phase | Tasks | Enterprise days | Growth days |
 |---|---|---|---|
 | Kickoff | AE→CS handoff review · Schedule kickoff call · Kickoff held + success criteria agreed · Customer workspace access provisioned | 1–5 | 1–2 |
-| Data Migration | Data export received · Field mapping approved · Test migration run · Production migration run · **Customer data verification sign-off** (customer approval) | 6–15 | 3–7 |
+| Data Migration | Data export received · Field mapping approved · Test migration run · Production migration run · **Customer data verification sign-off** (milestone) | 6–15 | 3–7 |
 | Configuration | Workspace & users configured · Pipelines & custom fields · Integrations connected · Admin training | 16–24 | 8–11 |
-| Go-Live | Go-live readiness check (depends on the data sign-off) · Go-live + handoff summary to Support | 25–30 | 12–14 |
+| Go-Live | Go-live readiness check (instructions say to wait for the data sign-off) · Go-live + handoff summary to Support | 25–30 | 12–14 |
+
+Rocketlane adjusts task dates when it imports a template, so individual task dates can differ from these day numbers. The project's start and due dates match the plan.
 
 ### 4.4 Communication Agent
 
@@ -139,8 +141,10 @@ Each run is keyed by the Gmail message ID (idempotent), and the Salesforce oppor
 Configured in Rocketlane (Automations), not in code:
 
 - Trigger: task is overdue.
-- Block 1: overdue by more than 1 day → notify the **Project Manager** (the CSM).
-- Block 2: overdue by more than 4 days → notify the **Project Owner** (CS Manager).
+- Block 1: overdue by 1 day → notify the **Project Manager** (the CSM).
+- Block 2: overdue by 4 days → notify the **Project Owner** (CS Manager).
+
+The 4-day block has fired for real on a seeded demo task. The 1-day block is configured the same way, but its notification goes to a sample user account, so I haven't seen it arrive.
 
 Priya's original rule, "blocked > 3 days", is about blocked status rather than due dates. I'd add it as a second automation (status = Blocked for 3 days → notify the Project Owner) once NovaCRM confirms how "blocked" is tracked (see Q6).
 
@@ -200,6 +204,7 @@ The deadline left no time for a round-trip with Karthik, so these are the assump
 | Slack Connect invite mocked | Paid Slack plan, `conversations.inviteShared` + admin approval flow |
 | AE directory YAML | Salesforce API: AE profile, opportunity details, tier cross-check |
 | Manual `resume` | Scheduled retry of parked runs with alerting |
+| Data sign-off is a milestone with instructions | Hard task dependency from the sign-off to Go-Live, plus customer approval in Rocketlane |
 | Out of scope | Handoff-summary agent at Go-Live, kickoff-scheduling agent, blocked-task automation |
 
 ## 9. How the deliverables map to the brief
@@ -211,5 +216,5 @@ The deadline left no time for a round-trip with Karthik, so these are the assump
 | Agent 2 – Communication | `src/novacrm/agents/communication.py` |
 | Rocketlane overdue automation | configured in Rocketlane; shown in the video |
 | Part 3 – guardrails | `src/novacrm/guardrails.py`, `escalation.py`, `audit.py` |
-| Part 4 – automated tests | `tests/` (42 tests, offline; `uv run pytest`) |
-| Video – positive and negative runs | Loom link in the submission email |
+| Part 4 – automated tests | `tests/` (45 tests, offline; `uv run pytest`) |
+| Video – positive and negative runs | Link in the submission email |
