@@ -39,6 +39,7 @@ rocketlane:
   backoff_seconds: 2              # exponential: 2, 4, 8
   invite_customer: false          # true in production (sends the customer a Rocketlane invite)
   expected_task_count: 15
+  expected_phases: [Kickoff, Data Migration, Configuration, Go-Live]
   field_ids:                      # custom project fields (created by scripts/rocketlane_bootstrap.py fields)
     plan_tier: 5000001024460
     csm_model: 5000001024461

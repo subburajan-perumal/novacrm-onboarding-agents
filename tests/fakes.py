@@ -87,11 +87,15 @@ class FakeVoice:
 
 
 class FakeRocketlane:
-    def __init__(self, *, down: bool = False, existing: list[dict] | None = None, task_count: int = 15):
+    PHASES = ("Kickoff", "Data Migration", "Configuration", "Go-Live")
+
+    def __init__(self, *, down: bool = False, existing: list[dict] | None = None, task_count: int = 15,
+                 phases: tuple[str, ...] = PHASES):
         self.down = down
         self.projects: list[dict] = list(existing or [])
         self.created: list[dict] = []
         self.task_count = task_count
+        self.phases = phases
         self.calls = 0
 
     def _maybe_down(self):
@@ -125,7 +129,8 @@ class FakeRocketlane:
 
     def list_tasks(self, project_id):
         self._maybe_down()
-        return [{"taskId": i, "taskName": f"t{i}", "phase": {"phaseName": "Kickoff"}} for i in range(self.task_count)]
+        return [{"taskId": i, "taskName": f"t{i}", "phase": {"phaseName": self.phases[i % len(self.phases)]}}
+                for i in range(self.task_count)]
 
 
 class FakeChat:

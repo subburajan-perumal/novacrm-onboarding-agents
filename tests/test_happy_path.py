@@ -1,5 +1,5 @@
 """Happy path: Enterprise deal email -> parse -> voice confirms -> Rocketlane project -> Slack channel."""
-from novacrm.models import RunState
+from novacrm.models import CallOutcome, RunState
 
 from .conftest import make_email
 from .fakes import answered
@@ -53,3 +53,11 @@ def test_every_action_is_audited(system):
         assert set(e) == {"ts", "run_id", "agent", "step", "input", "output", "decision", "rationale"}
     call = next(e for e in entries if e["step"] == "voice_call_result")
     assert call["decision"] == "ACCEPT" and "confirmed Enterprise" in call["rationale"]
+
+
+def test_every_audit_entry_explains_its_decision(system):
+    no_answer = CallOutcome(call_id="c", status="no_answer", raw_reason="web:missed")
+    s = system(outcomes=[no_answer, answered("Enterprise")])  # includes a retry
+    run = s.run(make_email("enterprise_ok"))
+    blank = [e["step"] for e in s.audit.entries(run["run_id"]) if not e["rationale"].strip()]
+    assert blank == []

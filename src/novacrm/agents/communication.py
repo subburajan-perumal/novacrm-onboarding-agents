@@ -104,5 +104,6 @@ class CommunicationAgent:
                        rationale="Slack Connect (external customer invite) needs a paid Slack plan; production calls inviteShared")
         result = ChannelResult(channel_id=channel_id, channel_name=name, topic=topic, welcome_text=welcome,
                                reused=bool(existing), internal_invites=invited)
-        self.audit.log(h.run_id, AGENT, "channel_personalized", output=result, decision="DONE")
+        self.audit.log(h.run_id, AGENT, "channel_personalized", output=result, decision="DONE",
+                       rationale=f"Channel name, topic and welcome message set for the {h.tier.value} plan")
         return result

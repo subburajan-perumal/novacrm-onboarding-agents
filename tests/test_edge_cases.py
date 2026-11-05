@@ -64,6 +64,23 @@ def test_rocketlane_timeout_counts_as_unavailable():
         client.list_tasks(1)
 
 
+# ---- template verification ---------------------------------------------------
+@pytest.mark.parametrize("rocketlane", [
+    FakeRocketlane(task_count=14),
+    FakeRocketlane(phases=("Kickoff", "Data Migration", "Configuration")),
+], ids=["wrong_task_count", "missing_phase"])
+def test_template_mismatch_tells_the_cs_manager_the_project_exists(system, rocketlane):
+    s = system(outcomes=[answered("Enterprise")], rocketlane=rocketlane)
+    run = s.run(make_email("enterprise_ok"))
+
+    check = next(e for e in s.audit.entries(run["run_id"]) if e["step"] == "template_verification")
+    assert check["decision"] == "WARN"
+    assert run["state"] == RunState.DONE.value  # the channel still gets set up
+    mail = s.mail.sent[0]
+    assert mail["to"] == "subburajanperumal+priya@gmail.com"
+    assert "already exists" in mail["body"] and "no Rocketlane project" not in mail["body"]
+
+
 # ---- existing onboarding project ---------------------------------------------
 def test_existing_project_is_not_duplicated(system):
     existing = [{"projectId": 42, "projectName": "Acme Logistics - Onboarding (Enterprise)",
@@ -164,6 +181,7 @@ def test_slack_failure_after_project_is_resumable(system):
     s = system(outcomes=[answered("Enterprise")], chat=chat)
     run = s.run(make_email("enterprise_ok"))
     assert run["state"] == RunState.CHANNEL_FAILED.value and len(s.rl.created) == 1
+    assert "already exists" in s.mail.sent[0]["body"] and "no Rocketlane project" not in s.mail.sent[0]["body"]
     chat.fail = False
     s.orch.resume()
     assert s.store.get(run["run_id"])["state"] == RunState.DONE.value

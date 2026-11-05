@@ -16,16 +16,22 @@ class Escalator:
         self.audit = audit
         self.chat = chat
 
-    def escalate(self, run_id: str, email: InboundEmail, reason: str, details: str = "", customer: str = "") -> None:
+    def escalate(self, run_id: str, email: InboundEmail, reason: str, details: str = "", customer: str = "",
+                 project_exists: bool = False) -> None:
         mgr = self.cfg.settings["cs_manager"]
         subject = f"[Onboarding needs a human] {customer or email.subject} - {reason[:80]}"
+        closing = (
+            "The Rocketlane project already exists, so please review it rather than creating another."
+            if project_exists else
+            "Nothing was assumed: no Rocketlane project or Slack channel is created until this is resolved.\n"
+            "Resolve it, then re-run the deal or reply on the AE thread."
+        )
         body = (
             f"Hi {mgr['name'].split()[0]},\n\n"
-            f"The onboarding agent stopped and needs a human decision.\n\n"
+            f"The onboarding agent needs a human decision.\n\n"
             f"Run: {run_id}\nDeal email: \"{email.subject}\" from {email.sender_email}\n"
             f"Reason: {reason}\n\n{details}\n\n"
-            "Nothing was assumed: no Rocketlane project or Slack channel is created until this is resolved.\n"
-            "Resolve it, then re-run the deal or reply on the AE thread.\n\n- NovaCRM Onboarding Agent"
+            f"{closing}\n\n- NovaCRM Onboarding Agent"
         )
         self.mail.send(mgr["email"], subject, body)
         self.mail.add_labels(email.message_id, [self.cfg.gmail["labels"]["escalated"]])
@@ -37,7 +43,8 @@ class Escalator:
                     self.chat.post_message(ch, f":rotating_light: *Onboarding needs a human* ({run_id})\n*{customer or email.subject}*: {reason}")
                     posted = True
             except Exception as exc:  # escalation must never crash on the secondary channel
-                self.audit.log(run_id, "orchestrator", "escalation_slack_failed", output=str(exc))
+                self.audit.log(run_id, "orchestrator", "escalation_slack_failed", output=str(exc),
+                               rationale="Slack is the secondary channel; the email escalation has already gone out")
         self.audit.log(run_id, "orchestrator", "escalated_to_human", input={"reason": reason},
                        output={"emailed": mgr["email"], "slack_posted": posted},
                        decision="ESCALATE", rationale=reason)

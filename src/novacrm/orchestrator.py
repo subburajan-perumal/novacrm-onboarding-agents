@@ -63,13 +63,15 @@ class Orchestrator:
             self._run_pipeline(run_id, email, source_text)
         except Exception as exc:  # last-resort: never lose a deal silently
             self.store.update(run_id, state=RunState.ESCALATED, data={"crash": repr(exc)})
-            self.audit.log(run_id, "orchestrator", "unexpected_error", output=repr(exc), decision="ESCALATE")
+            self.audit.log(run_id, "orchestrator", "unexpected_error", output=repr(exc), decision="ESCALATE",
+                           rationale="Unexpected failure; a person must review this run so the deal isn't lost")
             self.escalator.escalate(run_id, email, f"Unexpected error: {type(exc).__name__}", repr(exc))
         finally:
             try:
                 self.mail.add_labels(email.message_id, [self.cfg.gmail["seen_label"]])
             except Exception as exc:
-                self.audit.log(run_id, "orchestrator", "label_failed", output=repr(exc))
+                self.audit.log(run_id, "orchestrator", "label_failed", output=repr(exc),
+                               rationale="Couldn't label the email; the stored message ID still prevents reprocessing")
         return run_id
 
     def _run_pipeline(self, run_id: str, email: InboundEmail, source_text: str) -> None:
@@ -93,14 +95,16 @@ class Orchestrator:
             channel = self.comm.run(handoff)
         except Exception as exc:
             self.store.update(run_id, state=RunState.CHANNEL_FAILED, data={"slack_error": repr(exc)})
-            self.audit.log(run_id, "communication", "channel_failed", output=repr(exc), decision="ESCALATE")
+            self.audit.log(run_id, "communication", "channel_failed", output=repr(exc), decision="ESCALATE",
+                           rationale="The project exists; `novacrm resume` retries only the Slack step")
             self.escalator.escalate(run_id, email, "Slack channel setup failed (project already created)", repr(exc),
-                                    customer=deal.customer_name)
+                                    customer=deal.customer_name, project_exists=True)
             return
         self.store.update(run_id, state=RunState.DONE, channel_id=channel.channel_id)
         self.mail.add_labels(email.message_id, [self.cfg.gmail["labels"]["processed"]])
         self.audit.log(run_id, "orchestrator", "onboarding_started", decision="DONE",
-                       output={"project": project.project_url, "channel": channel.channel_name, "tier": tier.value})
+                       output={"project": project.project_url, "channel": channel.channel_name, "tier": tier.value},
+                       rationale="Project and channel are ready, so the CSM takes over")
 
     # ---- resume parked runs ----------------------------------------------------
     def resume(self) -> list[str]:
@@ -110,7 +114,8 @@ class Orchestrator:
             email = InboundEmail(**run["data"]["email"])
             deal = ParsedDeal(**run["data"]["deal"])
             tier = Tier(run["data"]["tier"])
-            self.audit.log(run["run_id"], "orchestrator", "resume", input={"state": run["state"]})
+            self.audit.log(run["run_id"], "orchestrator", "resume", input={"state": run["state"]},
+                           rationale="Retrying a run parked after a Rocketlane or Slack failure, without re-calling the AE")
             if run["state"] == RunState.PARKED_RL_DOWN.value:
                 self._project_and_channel(run["run_id"], email, deal, tier)
             else:

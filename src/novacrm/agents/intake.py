@@ -98,7 +98,8 @@ class IntakeAgent:
                 try:
                     judgement = self.llm.judge_transcript(outcome.transcript, deal.customer_name)
                 except Exception as exc:
-                    self.audit.log(run_id, AGENT, "transcript_check_failed", output=str(exc))
+                    self.audit.log(run_id, AGENT, "transcript_check_failed", output=str(exc),
+                                   rationale="Without the independent check, this call can't confirm a tier")
                 if not (outcome.tier in ("Enterprise", "Growth") and outcome.readback_confirmed):
                     unclear += 1
                 elif judgement is None or judgement.tier != outcome.tier or not judgement.ae_explicitly_confirmed:
@@ -125,7 +126,8 @@ class IntakeAgent:
                                         customer=deal.customer_name)
                 return None
             delay = self.cfg.voice["retry_delay_seconds"]
-            self.audit.log(run_id, AGENT, "voice_retry_scheduled", output={"in_seconds": delay, "next_attempt": attempt + 1})
+            self.audit.log(run_id, AGENT, "voice_retry_scheduled", output={"in_seconds": delay, "next_attempt": attempt + 1},
+                           rationale=f"Tier still unconfirmed, so calling again: {last_reason}")
             self.sleep(delay)
 
     # ---- 3. Rocketlane project --------------------------------------------
@@ -180,7 +182,9 @@ class IntakeAgent:
             self.audit.log(run_id, AGENT, "duplicate_check",
                            input={"customer": deal.customer_name, "opportunity": deal.salesforce_opportunity_id},
                            output=[{"projectId": p.get("projectId"), "projectName": p.get("projectName")} for p in existing],
-                           decision="FOUND" if existing else "NONE")
+                           decision="FOUND" if existing else "NONE",
+                           rationale="An active project matches this customer or opportunity" if existing
+                           else "No active project for this customer or opportunity, so it's safe to create one")
             adopt = None
             if existing:
                 same_run = run["data"].get("project_create_attempted") and any(
@@ -225,15 +229,25 @@ class IntakeAgent:
                 tasks = self.projects.list_tasks(project_id)
                 task_count = len(tasks)
                 expected = self.cfg.rocketlane.get("expected_task_count")
-                ok = expected is None or task_count == expected
+                phases = {(t.get("phase") or {}).get("phaseName", "") for t in tasks}
+                missing = sorted(set(self.cfg.rocketlane.get("expected_phases") or []) - phases)
+                problems = []
+                if expected is not None and task_count != expected:
+                    problems.append(f"{task_count} tasks, expected {expected}")
+                if missing:
+                    problems.append(f"missing phases: {', '.join(missing)}")
                 self.audit.log(run_id, "guardrail", "template_verification",
-                               output={"tasks": task_count, "expected": expected,
-                                       "phases": sorted({(t.get("phase") or {}).get("phaseName", "") for t in tasks})},
-                               decision="PASS" if ok else "WARN",
-                               rationale="Template import produced the expected task set" if ok
-                               else "Task count differs from the template definition; CS manager notified")
+                               output={"tasks": task_count, "expected": expected, "phases": sorted(phases)},
+                               decision="WARN" if problems else "PASS",
+                               rationale="; ".join(problems) + "; CS manager notified" if problems
+                               else "Template import produced the expected tasks and phases")
+                if problems:
+                    self.escalator.escalate(run_id, email, "Project doesn't match its onboarding template",
+                                            f"{'; '.join(problems)}\nProject: {self.cfg.rocketlane['app_url']}/projects/{project_id}",
+                                            customer=deal.customer_name, project_exists=True)
             except RocketlaneUnavailable as exc:
-                self.audit.log(run_id, "guardrail", "template_verification_skipped", output=str(exc))
+                self.audit.log(run_id, "guardrail", "template_verification_skipped", output=str(exc),
+                               rationale="Rocketlane stopped responding after the project was created; tasks not verified")
 
             start_d = date.fromisoformat(str(created.get("startDate") or start.isoformat()))
             due_d = date.fromisoformat(str(created.get("dueDate") or (start + timedelta(days=tcfg['duration_days'] - 1)).isoformat()))
