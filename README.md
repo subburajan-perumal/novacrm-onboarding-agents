@@ -2,9 +2,9 @@
 
 Multi-agent automation of NovaCRM's customer onboarding (Rocketlane FDE take-home).
 
-[![System architecture: an Orchestrator drives an Intake Agent and a Communication Agent. Each external service sits behind one adapter, guardrails decide what to trust, and an Escalator reaches the CS Manager.](docs/diagrams/system-architecture.svg)](docs/architecture.md)
+![Simple architecture: an Account Executive emails a Gmail inbox. The Intake Agent polls it, confirms the plan tier by voice through Retell, and creates a Rocketlane project from the tier's template. The Communication Agent then sets up the Slack channel. If the tier stays unconfirmed, a project already exists, or Rocketlane is down, the run goes to the CS Manager.](docs/diagrams/simple-architecture.svg)
 
-- How it works, with the deal lifecycle and the voice call: [`docs/architecture.md`](docs/architecture.md)
+- How it works, with the detailed system diagram, the deal lifecycle and the voice call: [`docs/architecture.md`](docs/architecture.md)
 - Design and assumptions: [`docs/requirements.md`](docs/requirements.md)
 
 ## Layout

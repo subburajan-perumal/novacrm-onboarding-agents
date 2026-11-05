@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 450" width="1080" height="450" role="img" aria-label="An Account Executive emails a Gmail inbox. The Intake Agent polls it, confirms the plan tier with the Account Executive through a Retell voice agent, and creates a Rocketlane project from the tier's template. It hands off to the Communication Agent, which sets up the Slack channel. If the tier stays unconfirmed, a project already exists, or Rocketlane is down, the run goes to the CS Manager." font-family="Arial, Helvetica, 'Liberation Sans', sans-serif">
+<title>NovaCRM onboarding agents: simple architecture</title>
+<defs>
+<marker id="a-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 1 L9 5 L0 9 z" fill="#1A2233"/></marker>
+<marker id="a-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 1 L9 5 L0 9 z" fill="#B42318"/></marker>
+</defs>
+<rect x="0" y="0" width="1080" height="450" rx="14" fill="#FFFFFF" stroke="#C9D1DC"/>
+
+<!-- edges first, so boxes and badges sit on top -->
+<g fill="none" stroke="#1A2233" stroke-width="1.6">
+<line x1="180" y1="80" x2="289" y2="80" marker-end="url(#a-ink)"/>
+<line x1="460" y1="80" x2="569" y2="80" marker-end="url(#a-ink)"/>
+<line x1="570" y1="196" x2="461" y2="196" marker-end="url(#a-ink)"/>
+<line x1="460" y1="226" x2="569" y2="226" marker-end="url(#a-ink)"/>
+<line x1="290" y1="211" x2="181" y2="211" marker-start="url(#a-ink)" marker-end="url(#a-ink)"/>
+<line x1="750" y1="80" x2="859" y2="80" marker-end="url(#a-ink)"/>
+<line x1="660" y1="250" x2="660" y2="329" marker-end="url(#a-ink)"/>
+<line x1="750" y1="370" x2="859" y2="370" marker-end="url(#a-ink)"/>
+</g>
+<path d="M600 250 V290 H100 V329" fill="none" stroke="#B42318" stroke-width="1.8" marker-end="url(#a-red)"/>
+
+<!-- people -->
+<rect x="20" y="40" width="160" height="210" rx="10" fill="#FFFFFF" stroke="#1A2233" stroke-width="1.5"/>
+<rect x="20" y="330" width="160" height="80" rx="10" fill="#FFFFFF" stroke="#B42318" stroke-width="2"/>
+
+<!-- services -->
+<g fill="#FFFFFF" stroke="#C9D1DC" stroke-width="1.5">
+<rect x="290" y="40" width="170" height="80" rx="10"/>
+<rect x="290" y="170" width="170" height="80" rx="10"/>
+<rect x="860" y="40" width="200" height="210" rx="10"/>
+<rect x="874" y="130" width="172" height="106" rx="8"/>
+<rect x="860" y="330" width="200" height="80" rx="10"/>
+</g>
+
+<!-- agents -->
+<g fill="#D9F0EC" stroke="#0E7C72" stroke-width="2">
+<rect x="570" y="40" width="180" height="210" rx="10"/>
+<rect x="570" y="330" width="180" height="80" rx="10"/>
+</g>
+
+<!-- box titles -->
+<g font-size="15" font-weight="700" fill="#1A2233" text-anchor="middle">
+<text x="100" y="138">Account</text>
+<text x="100" y="158">Executive</text>
+<text x="100" y="364">CS Manager</text>
+<text x="375" y="74">Gmail</text>
+<text x="375" y="204">Retell voice agent</text>
+<text x="660" y="118">Intake Agent</text>
+<text x="660" y="364">Communication Agent</text>
+<text x="960" y="72">Rocketlane</text>
+<text x="960" y="158" font-size="13.5">Overdue automation</text>
+<text x="960" y="364">Slack</text>
+</g>
+
+<!-- box details -->
+<g font-size="12.5" fill="#5A6472" text-anchor="middle">
+<text x="100" y="386">a person decides</text>
+<text x="375" y="96">CS inbox</text>
+<text x="375" y="226">web call in this demo</text>
+<text x="660" y="144">Claude reads the email</text>
+<text x="660" y="162">and the call transcript.</text>
+<text x="660" y="180">Plain rules decide.</text>
+<text x="660" y="386">Claude drafts, rules check</text>
+<text x="960" y="94">30-day Enterprise or</text>
+<text x="960" y="112">14-day Growth template</text>
+<text x="960" y="184">1 day → Project Manager</text>
+<text x="960" y="206">4 days → Project Owner</text>
+<text x="960" y="386">customer invite mocked</text>
+</g>
+
+<!-- arrow labels -->
+<g font-size="12.5" fill="#1A2233" text-anchor="middle">
+<text x="235" y="60">deal email</text>
+<text x="515" y="60">polled every 15 s</text>
+<text x="515" y="176">asks for the tier</text>
+<text x="515" y="246">tier + transcript</text>
+<text x="235" y="199">voice call</text>
+<text x="805" y="60">creates project</text>
+<text x="805" y="104">from template</text>
+<text x="805" y="350">channel, topic,</text>
+<text x="805" y="394">welcome message</text>
+<text x="678" y="284" text-anchor="start">hand-off: deal,</text>
+<text x="678" y="301" text-anchor="start">tier, project</text>
+</g>
+<g font-size="12.5" font-weight="700" fill="#B42318" text-anchor="middle">
+<text x="350" y="282">tier unconfirmed after retries, existing project, or Rocketlane down</text>
+<text x="350" y="308">email + #cs-escalations</text>
+</g>
+
+<!-- order of one deal -->
+<g fill="#FFFFFF" stroke="#1A2233" stroke-width="1.4">
+<circle cx="235" cy="80" r="10"/>
+<circle cx="515" cy="80" r="10"/>
+<circle cx="515" cy="196" r="10"/>
+<circle cx="805" cy="80" r="10"/>
+<circle cx="660" cy="290" r="10"/>
+<circle cx="805" cy="370" r="10"/>
+</g>
+<g font-size="11.5" font-weight="700" fill="#1A2233" text-anchor="middle">
+<text x="235" y="84">1</text>
+<text x="515" y="84">2</text>
+<text x="515" y="200">3</text>
+<text x="805" y="84">4</text>
+<text x="660" y="294">5</text>
+<text x="805" y="374">6</text>
+</g>
+
+<!-- key -->
+<rect x="20" y="425" width="14" height="10" rx="2" fill="#D9F0EC" stroke="#0E7C72"/>
+<text x="40" y="434" font-size="12" fill="#5A6472">agent</text>
+<line x1="90" y1="430" x2="118" y2="430" stroke="#B42318" stroke-width="1.8"/>
+<text x="125" y="434" font-size="12" fill="#5A6472">path to a person</text>
+<text x="1060" y="434" font-size="12" fill="#5A6472" text-anchor="end">Numbers show the order for one deal.</text>
+</svg>
